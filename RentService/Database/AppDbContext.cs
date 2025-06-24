@@ -33,9 +33,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
         {
             // Klucz główny
             entity.HasKey(e => e.EmployeeId);
-
             
-
             // Konfiguracja właściwości
             entity.Property(e => e.FirstName)
                 .IsRequired()

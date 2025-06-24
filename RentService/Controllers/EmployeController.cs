@@ -32,17 +32,11 @@ public class EmployeController : Controller
     {
         try
         {
-            // Dodaj breakpoint tutaj
-            var employeesCount = await _context.Employees.CountAsync();
-            Console.WriteLine($"Liczba pracowników w bazie: {employeesCount}");
-        
             var employees = await _context.Employees
                 .OrderBy(e => e.LastName)
                 .ThenBy(e => e.FirstName)
                 .ToListAsync();
             
-            Console.WriteLine($"Pobrano pracowników: {employees.Count}");
-        
             return View(employees);
         }
         catch (Exception ex)
@@ -63,7 +57,6 @@ public class EmployeController : Controller
         {
             Employee = new Employee
             {
-                // Ustawienie domyślnych wartości
                 Nationality = "Polskie",
                 Country = "Polska",
                 HireDate = DateTime.Today,
@@ -89,34 +82,15 @@ public class EmployeController : Controller
                         Console.WriteLine($"{key}: {error.ErrorMessage}");
                     }
                 }
-                // Jeśli model nie jest prawidłowy, zwróć formularz z błędami
                 return View(model);
             }
 
-            // Walidacja PESEL
             if (!IsValidPesel(model.Employee.Pesel))
             {
                 ModelState.AddModelError("Employee.Pesel", "PESEL jest nieprawidłowy");
                 return View(model);
             }
-
-            // Sprawdzenie czy PESEL już istnieje w bazie
-            // TODO: Dodać sprawdzenie w bazie danych
-            // if (await _employeeService.PeselExistsAsync(model.Employee.Pesel))
-            // {
-            //     ModelState.AddModelError("Employee.Pesel", "Pracownik z tym numerem PESEL już istnieje");
-            //     return View(model);
-            // }
-
-            // Sprawdzenie czy numer pracownika już istnieje
-            // TODO: Dodać sprawdzenie w bazie danych
-            // if (await _employeeService.EmployeeNumberExistsAsync(model.Employee.EmployeeNumber))
-            // {
-            //     ModelState.AddModelError("Employee.EmployeeNumber", "Pracownik z tym numerem już istnieje");
-            //     return View(model);
-            // }
-
-            // Obsługa plików
+            
             var user = new User
             {
                 UserName = model.Employee.PersonalEmail,
@@ -126,9 +100,7 @@ public class EmployeController : Controller
                 EmailConfirmed = true // lub false, jeśli chcesz wymagać potwierdzenia
             };
 
-// Tymczasowe hasło – później można go zmusić do zmiany hasła przy pierwszym logowaniu
-            string defaultPassword = "Pracownik123!"; // możesz wygenerować losowo lub pobrać z formularza
-
+            string defaultPassword = "Pracownik123!"; 
             var result = await _userManager.CreateAsync(user, defaultPassword);
 
             if (!result.Succeeded)
@@ -140,20 +112,16 @@ public class EmployeController : Controller
                 return View(model);
             }
 
-// Przypisanie identyfikatora użytkownika do pracownika
             model.Employee.UserId = user.Id;
             
             await HandleFileUploads(model);
-
-            // Ustawienie metadanych
+            
             model.Employee.CreatedAt = DateTime.Now;
             model.Employee.CreatedBy = User.Identity?.Name ?? "System";
-
-            // TODO: Zapisanie do bazy danych
+            
             _context.Employees.Add(model.Employee);
             await _context.SaveChangesAsync();
-
-            // Logowanie
+            
             _logger.LogInformation("Dodano nowego pracownika: {FirstName} {LastName} (PESEL: {Pesel})", 
                 model.Employee.FirstName, model.Employee.LastName, model.Employee.Pesel);
 
@@ -289,48 +257,8 @@ public class EmployeController : Controller
             }
         }
     }
-
-    private bool IsValidImageFile(IFormFile file)
-    {
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        
-        return allowedExtensions.Contains(extension) && 
-               file.ContentType.StartsWith("image/") && 
-               file.Length <= 5 * 1024 * 1024; // 5MB limit
-    }
-
-    private bool IsValidDocumentFile(IFormFile file)
-    {
-        var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        
-        return allowedExtensions.Contains(extension) && 
-               file.Length <= 10 * 1024 * 1024; // 10MB limit
-    }
-
-    private bool IsValidPesel(string pesel)
-    {
-        if (string.IsNullOrWhiteSpace(pesel) || pesel.Length != 11)
-            return false;
-
-        if (!pesel.All(char.IsDigit))
-            return false;
-
-        // Walidacja sumy kontrolnej PESEL
-        int[] weights = { 1, 3, 7, 9, 1, 3, 7, 9, 1, 3 };
-        int sum = 0;
-
-        for (int i = 0; i < 10; i++)
-        {
-            sum += int.Parse(pesel[i].ToString()) * weights[i];
-        }
-
-        int checkDigit = (10 - (sum % 10)) % 10;
-        return checkDigit == int.Parse(pesel[10].ToString());
-    }
-
-    [HttpGet]
+    
+      [HttpGet]
         public async Task<IActionResult> EmployeDetail(int id)
         {
             try
@@ -454,31 +382,8 @@ public class EmployeController : Controller
 
             return View(model);
         }
-    
-        private async Task<string> SaveFile(IFormFile file, string folder)
-        {
-            if (file == null || file.Length == 0)
-                return string.Empty;
 
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", folder);
-            
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(fileStream);
-            }
-
-            return Path.Combine("uploads", folder, uniqueFileName).Replace("\\", "/");
-        }
-        
-        [HttpPost]
+         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
@@ -544,7 +449,68 @@ public class EmployeController : Controller
             return Json(new { available = false, error = "Wystąpił błąd podczas sprawdzania" });
         }
     }
+    private bool IsValidImageFile(IFormFile file)
+    {
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        
+        return allowedExtensions.Contains(extension) && 
+               file.ContentType.StartsWith("image/") && 
+               file.Length <= 5 * 1024 * 1024; // 5MB limit
+    }
+
+    private bool IsValidDocumentFile(IFormFile file)
+    {
+        var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        
+        return allowedExtensions.Contains(extension) && 
+               file.Length <= 10 * 1024 * 1024; // 10MB limit
+    }
+
+    private bool IsValidPesel(string pesel)
+    {
+        if (string.IsNullOrWhiteSpace(pesel) || pesel.Length != 11)
+            return false;
+
+        if (!pesel.All(char.IsDigit))
+            return false;
+
+        // Walidacja sumy kontrolnej PESEL
+        int[] weights = { 1, 3, 7, 9, 1, 3, 7, 9, 1, 3 };
+        int sum = 0;
+
+        for (int i = 0; i < 10; i++)
+        {
+            sum += int.Parse(pesel[i].ToString()) * weights[i];
+        }
+
+        int checkDigit = (10 - (sum % 10)) % 10;
+        return checkDigit == int.Parse(pesel[10].ToString());
+    }
+
+       
     
-    
-    
+        private async Task<string> SaveFile(IFormFile file, string folder)
+        {
+            if (file == null || file.Length == 0)
+                return string.Empty;
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", folder);
+            
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+
+            return Path.Combine("uploads", folder, uniqueFileName).Replace("\\", "/");
+        }
 }
