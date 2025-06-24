@@ -1,0 +1,823 @@
+@{
+ViewData["Title"] = "Edycja pracownika";
+Layout = "_Layout";
+}
+
+@model RentService.Area.EmployeModule.Models.EmployeeCreateViewModel
+@using System.IO
+@section Head {
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .detail-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #e5e7eb;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: #374151;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        background-color: #1f2937;
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: #374151;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        background-color: #1f2937;
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: #374151;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        background-color: #1f2937;
+    }
+
+    .file-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: #374151;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .file-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .file-input::file-selector-button {
+        padding: 0.5rem 1rem;
+        margin-right: 1rem;
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .file-input::file-selector-button:hover {
+        background-color: #2563eb;
+    }
+
+    .validation-error {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    .action-button {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        margin-right: 0.75rem;
+        margin-bottom: 0.75rem;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4b5563;
+        transform: translateY(-1px);
+    }
+
+    .btn-success {
+        background-color: #10b981;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background-color: #059669;
+        transform: translateY(-1px);
+    }
+
+    .section-header {
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .grid-responsive {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .avatar-large {
+        width: 150px;
+        height: 150px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0 auto 1.5rem;
+        border: 4px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .current-file {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .required {
+        color: #ef4444;
+    }
+
+    
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <nav class="ml-4 flex items-center space-x-2 text-sm">
+                        <a href="@Url.Action("EmployeeList", "Employe")" class="text-gray-400 hover:text-white">
+                            Pracownicy
+                        </a>
+                        <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
+                        <a href="@Url.Action("EmployeDetail", "Employe", new { id = Model.Employee.EmployeeId })" class="text-gray-400 hover:text-white">
+                            @Model.Employee.FirstName @Model.Employee.LastName
+                        </a>
+                        <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
+                        <span class="text-white font-medium">Edycja</span>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button type="submit" form="employee-form" class="action-button btn-success">
+                        <i class="fas fa-save mr-2"></i>
+                        Zapisz
+                    </button>
+                    <a href="@Url.Action("EmployeDetail", "Employe", new { id = Model.Employee.EmployeeId })"
+                       class="action-button btn-secondary">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Anuluj
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+
+        <form action="@Url.Action("EmployeeEdit", "Employe", new { id = Model.Employee.EmployeeId })" 
+              method="post" 
+              enctype="multipart/form-data" 
+              id="employee-form">
+            
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Employee.EmployeeId)
+                @Html.HiddenFor(m => m.Employee.UserId)
+                @Html.HiddenFor(m => m.Employee.CreatedAt)
+                @Html.HiddenFor(m => m.Employee.CreatedBy)
+                @Html.HiddenFor(m => m.Employee.ImagePath)
+                @Html.HiddenFor(m => m.Employee.ContractPath)
+                @Html.HiddenFor(m => m.Employee.IdCopyPath)
+                @Html.HiddenFor(m => m.Employee.OtherDocumentsPath)
+
+                <!-- Employee Header Card -->
+                <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-8 mb-8">
+                    <div class="flex flex-col lg:flex-row items-center lg:items-start gap-8">
+                        <!-- Avatar -->
+                        <div class="flex-shrink-0">
+                            @if (!string.IsNullOrEmpty(Model.Employee.ImagePath))
+                            {
+                                <img class="avatar-large object-cover"
+                                     src="/@Model.Employee.ImagePath"
+                                     alt="@Model.Employee.FirstName @Model.Employee.LastName"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="avatar-large" style="display: none;">
+                                    @Model.Employee.FirstName.First()@Model.Employee.LastName.First()
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="avatar-large">
+                                    @Model.Employee.FirstName.First()@Model.Employee.LastName.First()
+                                </div>
+                            }
+                            
+                            <!-- Photo Upload -->
+                            <div class="mt-4">
+                                <label class="form-label">Nowe zdjęcie</label>
+                                @Html.TextBoxFor(m => m.Photo, new { type = "file", @class = "file-input", accept = "image/*" })
+                                @if (!string.IsNullOrEmpty(Model.Employee.ImagePath))
+                                {
+                                    <div class="current-file mt-2">
+                                        <i class="fas fa-image mr-2"></i>
+                                        Aktualne zdjęcie
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Basic Info Form -->
+                        <div class="flex-1 w-full">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="form-group">
+                                    <label class="form-label">Imię <span class="required">*</span></label>
+                                    @Html.TextBoxFor(m => m.Employee.FirstName, new { @class = "form-control", placeholder = "Wpisz imię" })
+                                    @Html.ValidationMessageFor(m => m.Employee.FirstName, "", new { @class = "validation-error" })
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Nazwisko <span class="required">*</span></label>
+                                    @Html.TextBoxFor(m => m.Employee.LastName, new { @class = "form-control", placeholder = "Wpisz nazwisko" })
+                                    @Html.ValidationMessageFor(m => m.Employee.LastName, "", new { @class = "validation-error" })
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">PESEL <span class="required">*</span></label>
+                                    @Html.TextBoxFor(m => m.Employee.Pesel, new { @class = "form-control", placeholder = "11 cyfr", maxlength = "11" })
+                                    @Html.ValidationMessageFor(m => m.Employee.Pesel, "", new { @class = "validation-error" })
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Data urodzenia <span class="required">*</span></label>
+                                    @Html.TextBoxFor(m => m.Employee.BirthDate, new { @class = "form-control", type = "datetime" })
+                                    @Html.ValidationMessageFor(m => m.Employee.BirthDate, "", new { @class = "validation-error" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="grid-responsive">
+
+                    <!-- Personal Information -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h2 class="section-header">
+                            <i class="fas fa-user mr-2"></i>
+                            Dane osobowe
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div class="form-group">
+                                <label class="form-label">Miejsce urodzenia</label>
+                                @Html.TextBoxFor(m => m.Employee.BirthPlace, new { @class = "form-control", placeholder = "Wpisz miejsce urodzenia" })
+                                @Html.ValidationMessageFor(m => m.Employee.BirthPlace, "", new { @class = "validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Płeć <span class="required">*</span></label>
+                                @Html.DropDownListFor(m => m.Employee.Gender, new SelectListItem[]
+                                {
+                                    new SelectListItem { Text = "Wybierz płeć", Value = "" },
+                                    new SelectListItem { Text = "Mężczyzna", Value = "Mężczyzna" },
+                                    new SelectListItem { Text = "Kobieta", Value = "Kobieta" }
+                                }, new { @class = "form-select" })
+                                @Html.ValidationMessageFor(m => m.Employee.Gender, "", new { @class = "validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Obywatelstwo</label>
+                                @Html.TextBoxFor(m => m.Employee.Nationality, new { @class = "form-control", placeholder = "Wpisz obywatelstwo" })
+                                @Html.ValidationMessageFor(m => m.Employee.Nationality, "", new { @class = "validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Wykształcenie</label>
+                                @Html.DropDownListFor(m => m.Employee.Education, new SelectListItem[]
+                                {
+                                    new SelectListItem { Text = "Wybierz wykształcenie", Value = "" },
+                                    new SelectListItem { Text = "Podstawowe", Value = "Podstawowe" },
+                                    new SelectListItem { Text = "Zasadnicze zawodowe", Value = "Zasadnicze zawodowe" },
+                                    new SelectListItem { Text = "Średnie", Value = "Średnie" },
+                                    new SelectListItem { Text = "Wyższe licencjackie", Value = "Wyższe licencjackie" },
+                                    new SelectListItem { Text = "Wyższe magisterskie", Value = "Wyższe magisterskie" },
+                                    new SelectListItem { Text = "Doktorat", Value = "Doktorat" }
+                                }, new { @class = "form-select" })
+                                @Html.ValidationMessageFor(m => m.Employee.Education, "", new { @class = "validation-error" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h2 class="section-header">
+                            <i class="fas fa-address-book mr-2"></i>
+                            Dane kontaktowe
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div class="form-group">
+                                <label class="form-label">Email prywatny</label>
+                                @Html.TextBoxFor(m => m.Employee.PersonalEmail, new { @class = "form-control", type = "email", placeholder = "email@example.com" })
+                                @Html.ValidationMessageFor(m => m.Employee.PersonalEmail, "", new { @class = "validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Telefon prywatny</label>
+                                @Html.TextBoxFor(m => m.Employee.PersonalPhone, new { @class = "form-control", type = "tel", placeholder = "+48 123 456 789" })
+                                @Html.ValidationMessageFor(m => m.Employee.PersonalPhone, "", new { @class = "validation-error" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Information -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h2 class="section-header">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            Adres zamieszkania
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div class="form-group">
+                                <label class="form-label">Ulica i numer <span class="required">*</span></label>
+                                @Html.TextBoxFor(m => m.Employee.Street, new { @class = "form-control", placeholder = "np. ul. Główna 123" })
+                                @Html.ValidationMessageFor(m => m.Employee.Street, "", new { @class = "validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Kod pocztowy <span class="required">*</span></label>
+                                @Html.TextBoxFor(m => m.Employee.PostalCode, new { @class = "form-control", placeholder = "00-000", maxlength = "6" })
+                                @Html.ValidationMessageFor(m => m.Employee.PostalCode, "", new { @class = "validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Miasto <span class="required">*</span></label>
+                                @Html.TextBoxFor(m => m.Employee.City, new { @class = "form-control", placeholder = "Wpisz miasto" })
+                                @Html.ValidationMessageFor(m => m.Employee.City, "", new { @class = "validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Kraj</label>
+                                @Html.TextBoxFor(m => m.Employee.Country, new { @class = "form-control", placeholder = "Wpisz kraj" })
+                                @Html.ValidationMessageFor(m => m.Employee.Country, "", new { @class = "validation-error" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employment Information -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h2 class="section-header">
+                            <i class="fas fa-briefcase mr-2"></i>
+                            Zatrudnienie
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div class="form-group">
+                                <label class="form-label">Data zatrudnienia <span class="required">*</span></label>
+                                @Html.TextBoxFor(m => m.Employee.HireDate, new { @class = "form-control", type = "datetime" })
+                                @Html.ValidationMessageFor(m => m.Employee.HireDate, "", new { @class = "validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Typ umowy <span class="required">*</span></label>
+                                @Html.DropDownListFor(m => m.Employee.ContractType, new SelectListItem[]
+                                {
+                                    new SelectListItem { Text = "Wybierz typ umowy", Value = "" },
+                                    new SelectListItem { Text = "Umowa o pracę", Value = "Umowa o pracę" },
+                                    new SelectListItem { Text = "Umowa zlecenie", Value = "Umowa zlecenie" },
+                                    new SelectListItem { Text = "Umowa o dzieło", Value = "Umowa o dzieło" },
+                                    new SelectListItem { Text = "Umowa B2B", Value = "Umowa B2B" },
+                                    new SelectListItem { Text = "Praktyki", Value = "Praktyki" }
+                                }, new { @class = "form-select" })
+                                @Html.ValidationMessageFor(m => m.Employee.ContractType, "", new { @class = "validation-error" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h2 class="section-header">
+                            <i class="fas fa-file-alt mr-2"></i>
+                            Dokumenty
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div class="form-group">
+                                <label class="form-label">Umowa o pracę</label>
+                                @Html.TextBoxFor(m => m.Contract, new { type = "file", @class = "file-input", accept = ".pdf,.doc,.docx" })
+                                @if (!string.IsNullOrEmpty(Model.Employee.ContractPath))
+                                {
+                                    <div class="current-file mt-2">
+                                        <i class="fas fa-file-contract mr-2"></i>
+                                        <a href="/@Model.Employee.ContractPath" target="_blank" class="text-blue-400 hover:text-blue-300">
+                                            Aktualna umowa
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Kopia dowodu osobistego</label>
+                                @Html.TextBoxFor(m => m.IdCopy, new { type = "file", @class = "file-input", accept = ".pdf,.jpg,.jpeg,.png" })
+                                @if (!string.IsNullOrEmpty(Model.Employee.IdCopyPath))
+                                {
+                                    <div class="current-file mt-2">
+                                        <i class="fas fa-id-card mr-2"></i>
+                                        <a href="/@Model.Employee.IdCopyPath" target="_blank" class="text-blue-400 hover:text-blue-300">
+                                            Aktualna kopia dowodu
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Inne dokumenty</label>
+                                <input type="file" name="OtherDocuments" class="file-input" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                @if (!string.IsNullOrEmpty(Model.Employee.OtherDocumentsPath))
+                                {
+                                    <div class="mt-2">
+                                        @foreach (var docPath in Model.Employee.OtherDocumentsPath.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                                        {
+                                            <div class="current-file mt-1">
+                                                <i class="fas fa-file mr-2"></i>
+                                                <a href="/@docPath.Trim()" target="_blank" class="text-blue-400 hover:text-blue-300">
+                                                    @System.IO.Path.GetFileName(docPath.Trim())
+                                                </a>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h2 class="section-header">
+                            <i class="fas fa-sticky-note mr-2"></i>
+                            Uwagi
+                        </h2>
+
+                        <div class="form-group">
+                            <label class="form-label">Dodatkowe informacje</label>
+                            @Html.TextAreaFor(m => m.Employee.Notes, new { @class = "form-textarea", placeholder = "Wpisz dodatkowe uwagi lub informacje o pracowniku..." })
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Action Buttons -->
+                <div class="mt-8 flex flex-wrap justify-center lg:justify-end gap-4">
+                    <button type="submit" class="action-button btn-success">
+                        <i class="fas fa-save mr-2"></i>
+                        Zapisz zmiany
+                    </button>
+                    <a href="@Url.Action("EmployeDetail", "Employe", new { id = Model.Employee.EmployeeId })"
+                       class="action-button btn-secondary">
+                        <i class="fas fa-times mr-2"></i>
+                        Anuluj
+                    </a>
+                </div>
+            
+</form>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const sidebar = document.getElementById('sidebar');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+        });
+    }
+
+    // PESEL validation
+    document.querySelector('input[name="Employee.Pesel"]').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        e.target.value = value;
+        
+        if (value.length === 11) {
+            validatePesel(value);
+        }
+    });
+
+    function validatePesel(pesel) {
+        const weights = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3];
+        let sum = 0;
+        
+        for (let i = 0; i < 10; i++) {
+            sum += parseInt(pesel[i]) * weights[i];
+        }
+        
+        const checkDigit = (10 - (sum % 10)) % 10;
+        const isValid = checkDigit === parseInt(pesel[10]);
+        
+        const input = document.querySelector('input[name="Employee.Pesel"]');
+        if (isValid) {
+            input.style.borderColor = '#10b981';
+        } else {
+            input.style.borderColor = '#ef4444';
+        }
+    }
+
+    // Postal code formatting
+    document.querySelector('input[name="Employee.PostalCode"]').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 3) {
+            value = value.substring(0, 2) + '-' + value.substring(2, 5);
+        }
+        e.target.value = value;
+    });
+
+    // Phone number formatting
+    const phoneInput = document.querySelector('input[name="Employee.PersonalPhone"]');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                if (value.startsWith('48')) {
+                    value = '+' + value;
+                } else if (!value.startsWith('+')) {
+                    value = '+48' + value;
+                }
+            }
+            e.target.value = value;
+        });
+    }
+
+    // Form validation before submit
+    document.getElementById('employee-form').addEventListener('submit', function(e) {
+        let isValid = true;
+        const requiredFields = [
+            'Employee.FirstName',
+            'Employee.LastName',
+            'Employee.Pesel',
+            'Employee.BirthDate',
+            'Employee.Gender',
+            'Employee.Street',
+            'Employee.PostalCode',
+            'Employee.City',
+            'Employee.HireDate',
+            'Employee.ContractType'
+        ];
+
+        requiredFields.forEach(fieldName => {
+            const field = document.querySelector(`input[name="${fieldName}"], select[name="${fieldName}"]`);
+            if (field && !field.value.trim()) {
+                field.style.borderColor = '#ef4444';
+                isValid = false;
+            } else if (field) {
+                field.style.borderColor = '#4b5563';
+            }
+        });
+
+        // PESEL validation
+        const peselField = document.querySelector('input[name="Employee.Pesel"]');
+        if (peselField && peselField.value.length !== 11) {
+            peselField.style.borderColor = '#ef4444';
+            isValid = false;
+        }
+
+        // Email validation
+        const emailField = document.querySelector('input[name="Employee.PersonalEmail"]');
+        if (emailField && emailField.value && !isValidEmail(emailField.value)) {
+            emailField.style.borderColor = '#ef4444';
+            isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Proszę wypełnić wszystkie wymagane pola poprawnie.');
+        }
+    });
+
+    function isValidEmail(email) {
+       return true;
+    }
+
+    // File upload validation
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const maxSize = input.accept.includes('image') ? 5 * 1024 * 1024 : 10 * 1024 * 1024; // 5MB for images, 10MB for documents
+                
+                if (file.size > maxSize) {
+                    alert(`Plik jest za duży. Maksymalny rozmiar: ${maxSize / (1024 * 1024)}MB`);
+                    e.target.value = '';
+                    return;
+                }
+
+                // Show file name
+                const fileName = file.name;
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'current-file mt-2';
+                fileInfo.innerHTML = `<i class="fas fa-file mr-2"></i>Nowy plik: ${fileName}`;
+                
+                // Remove existing file info for this input
+                const existingInfo = e.target.parentNode.querySelector('.new-file-info');
+                if (existingInfo) {
+                    existingInfo.remove();
+                }
+                
+                fileInfo.className += ' new-file-info';
+                e.target.parentNode.appendChild(fileInfo);
+            }
+        });
+    });
+
+    // Auto-save draft functionality (optional)
+    let autoSaveTimeout;
+    const formInputs = document.querySelectorAll('input, select, textarea');
+    
+    formInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                // Here you could implement auto-save to localStorage or server
+                console.log('Auto-saving draft...');
+            }, 2000);
+        });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+            switch(e.key) {
+                case 's':
+                    e.preventDefault();
+                    document.getElementById('employee-form').submit();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    window.location.href = '@Url.Action("EmployeDetail", "Employee", new { id = Model.Employee.EmployeeId })';
+                    break;
+            }
+        }
+    });
+
+    // Add tooltips for keyboard shortcuts
+    document.addEventListener('DOMContentLoaded', function() {
+        const saveButtons = document.querySelectorAll('button[type="submit"]');
+        saveButtons.forEach(button => {
+            button.title = 'Zapisz zmiany (Ctrl+S)';
+        });
+        
+        const cancelButtons = document.querySelectorAll('a[href*="EmployeDetail"]');
+        cancelButtons.forEach(button => {
+            button.title = 'Anuluj (Escape)';
+        });
+    });
+
+    // Smooth scrolling to validation errors
+    function scrollToFirstError() {
+        const firstError = document.querySelector('.validation-error:not(:empty)');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    // Call scroll to error on page load if there are validation errors
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.querySelector('.validation-error:not(:empty)')) {
+            setTimeout(scrollToFirstError, 100);
+        }
+    });
+
+    // Dynamic form sections (show/hide based on contract type)
+    const contractTypeSelect = document.querySelector('select[name="Employee.ContractType"]');
+    if (contractTypeSelect) {
+        contractTypeSelect.addEventListener('change', function() {
+            // You can add logic here to show/hide different sections based on contract type
+            // For example, show different fields for B2B vs employment contract
+        });
+    }
+
+    // Real-time character count for notes
+    const notesTextarea = document.querySelector('textarea[name="Employee.Notes"]');
+    if (notesTextarea) {
+        const maxLength = 1000;
+        const counter = document.createElement('div');
+        counter.className = 'text-gray-400 text-sm mt-1';
+        counter.textContent = `0/${maxLength} znaków`;
+        notesTextarea.parentNode.appendChild(counter);
+
+        notesTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            counter.textContent = `${length}/${maxLength} znaków`;
+            
+            if (length > maxLength * 0.9) {
+                counter.style.color = '#f59e0b';
+            } else if (length > maxLength * 0.8) {
+                counter.style.color = '#eab308';
+            } else {
+                counter.style.color = '#9ca3af';
+            }
+        });
+    }
+</script>
+}

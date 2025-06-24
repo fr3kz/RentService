@@ -1,0 +1,576 @@
+@{
+ViewData["Title"] = "Szczegóły pracownika";
+Layout = "_Layout";
+}
+
+@model RentService.Area.EmployeModule.Models.Employee
+@using System.IO
+@section Head {
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .detail-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: rgb(16, 185, 129);
+    }
+
+    .info-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #9ca3af;
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .info-value {
+        color: #ffffff;
+        font-size: 1rem;
+        word-break: break-word;
+    }
+
+    .avatar-large {
+        width: 150px;
+        height: 150px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0 auto 1.5rem;
+        border: 4px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .document-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .document-link:hover {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+        transform: translateY(-1px);
+    }
+
+    .action-button {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        margin-right: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4b5563;
+        transform: translateY(-1px);
+    }
+
+    .btn-danger {
+        background-color: #ef4444;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: #dc2626;
+        transform: translateY(-1px);
+    }
+
+    .section-header {
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .grid-responsive {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /*media (max-width: 768px) {
+    .avatar-large {
+        width: 120px;
+        height: 120px;
+        font-size: 2.5rem;
+    }
+
+    .grid-responsive {
+        grid-template-columns: 1fr;
+    }
+    }*/
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <nav class="ml-4 flex items-center space-x-2 text-sm">
+                        <a href="@Url.Action("EmployeeList", "Employee")" class="text-gray-400 hover:text-white">
+                            Pracownicy
+                        </a>
+                        <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
+                        <span class="text-white font-medium">@Model.FirstName @Model.LastName</span>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="@Url.Action("EmployeeEdit", "Employe", new { id = Model.EmployeeId })"
+                       class="action-button btn-primary">
+                        <i class="fas fa-edit mr-2"></i>
+                        Edytuj
+                    </a>
+                    <button onclick="deleteEmployee(@Model.EmployeeId)"
+                            class="action-button btn-danger">
+                        <i class="fas fa-trash mr-2"></i>
+                        Usuń
+                    </button>
+                    <a href="@Url.Action("EmployeeList", "Employee")"
+                       class="action-button btn-secondary">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Powrót
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+
+            <!-- Employee Header Card -->
+            <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-8 mb-8">
+                <div class="flex flex-col lg:flex-row items-center lg:items-start gap-8">
+                    <!-- Avatar -->
+                    <div class="flex-shrink-0">
+                        @if (!string.IsNullOrEmpty(Model.ImagePath))
+                        {
+                        <img class="avatar-large object-cover"
+                             src="/@Model.ImagePath"
+                             alt="@Model.FirstName @Model.LastName"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-large" style="display: none;">
+                            @Model.FirstName.First()@Model.LastName.First()
+                        </div>
+                        }
+                        else
+                        {
+                        <div class="avatar-large">
+                            @Model.FirstName.First()@Model.LastName.First()
+                        </div>
+                        }
+                    </div>
+
+                    <!-- Basic Info -->
+                    <div class="flex-1 text-center lg:text-left">
+                        <h1 class="text-4xl font-bold text-white mb-2">
+                            @Model.FirstName @Model.LastName
+                        </h1>
+                        <p class="text-xl text-gray-300 mb-4">@Model.ContractType</p>
+
+                        <div class="flex flex-wrap justify-center lg:justify-start gap-3 mb-6">
+                            <span class="status-badge status-active">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                Aktywny
+                            </span>
+                            <span class="status-badge" style="background-color: rgba(168, 85, 247, 0.2); color: rgb(168, 85, 247);">
+                                <i class="fas fa-calendar text-xs mr-2"></i>
+                                @Math.Round((DateTime.Now - Model.HireDate).TotalDays / 365.25, 1) lat stażu
+                            </span>
+                            <span class="status-badge" style="background-color: rgba(245, 158, 11, 0.2); color: rgb(245, 158, 11);">
+                                <i class="fas fa-birthday-cake text-xs mr-2"></i>
+                                @Math.Round((DateTime.Now - Model.BirthDate).TotalDays / 365.25, 0) lat
+                            </span>
+                        </div>
+
+                        <!-- Quick Contact -->
+                        <div class="flex flex-wrap justify-center lg:justify-start gap-4">
+                            @if (!string.IsNullOrEmpty(Model.PersonalEmail))
+                            {
+                            <a href="mailto:@Model.PersonalEmail" class="document-link">
+                                <i class="fas fa-envelope mr-2"></i>
+                                @Model.PersonalEmail
+                            </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.PersonalPhone))
+                            {
+                            <a href="tel:@Model.PersonalPhone" class="document-link">
+                                <i class="fas fa-phone mr-2"></i>
+                                @Model.PersonalPhone
+                            </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="grid-responsive">
+
+                <!-- Personal Information -->
+                <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                    <h2 class="section-header">
+                        <i class="fas fa-user mr-2"></i>
+                        Dane osobowe
+                    </h2>
+
+                    <div class="space-y-1">
+                        <div class="info-item">
+                            <div class="info-label">PESEL</div>
+                            <div class="info-value">@Model.Pesel</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Data urodzenia</div>
+                            <div class="info-value">@Model.BirthDate.ToString("dd.MM.yyyy")</div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.BirthPlace))
+                        {
+                        <div class="info-item">
+                            <div class="info-label">Miejsce urodzenia</div>
+                            <div class="info-value">@Model.BirthPlace</div>
+                        </div>
+                        }
+
+                        <div class="info-item">
+                            <div class="info-label">Płeć</div>
+                            <div class="info-value">@Model.Gender</div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Nationality))
+                        {
+                        <div class="info-item">
+                            <div class="info-label">Obywatelstwo</div>
+                            <div class="info-value">@Model.Nationality</div>
+                        </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.Education))
+                        {
+                        <div class="info-item">
+                            <div class="info-label">Wykształcenie</div>
+                            <div class="info-value">@Model.Education</div>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                    <h2 class="section-header">
+                        <i class="fas fa-map-marker-alt mr-2"></i>
+                        Adres zamieszkania
+                    </h2>
+
+                    <div class="space-y-1">
+                        <div class="info-item">
+                            <div class="info-label">Ulica i numer</div>
+                            <div class="info-value">@Model.Street</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Kod pocztowy</div>
+                            <div class="info-value">@Model.PostalCode</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Miasto</div>
+                            <div class="info-value">@Model.City</div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Country))
+                        {
+                        <div class="info-item">
+                            <div class="info-label">Kraj</div>
+                            <div class="info-value">@Model.Country</div>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Employment Information -->
+                <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                    <h2 class="section-header">
+                        <i class="fas fa-briefcase mr-2"></i>
+                        Zatrudnienie
+                    </h2>
+
+                    <div class="space-y-1">
+                        <div class="info-item">
+                            <div class="info-label">Data zatrudnienia</div>
+                            <div class="info-value">@Model.HireDate.ToString("dd.MM.yyyy")</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Staż pracy</div>
+                            <div class="info-value text-green-400">
+                                @{
+                                var workYears = Math.Round((DateTime.Now - Model.HireDate).TotalDays / 365.25, 1);
+                                var workDays = (DateTime.Now - Model.HireDate).Days;
+                                }
+                                @workYears lat (@workDays dni)
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Typ umowy</div>
+                            <div class="info-value">@Model.ContractType</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents -->
+                @if (!string.IsNullOrEmpty(Model.ContractPath) || !string.IsNullOrEmpty(Model.IdCopyPath) || !string.IsNullOrEmpty(Model.OtherDocumentsPath))
+                {
+                <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                    <h2 class="section-header">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        Dokumenty
+                    </h2>
+
+                    <div class="flex flex-wrap gap-2">
+                        @if (!string.IsNullOrEmpty(Model.ContractPath))
+                        {
+                        <a href="/@Model.ContractPath" target="_blank" class="document-link">
+                            <i class="fas fa-file-contract mr-2"></i>
+                            Umowa o pracę
+                        </a>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.IdCopyPath))
+                        {
+                        <a href="/@Model.IdCopyPath" target="_blank" class="document-link">
+                            <i class="fas fa-id-card mr-2"></i>
+                            Kopia dowodu
+                        </a>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.OtherDocumentsPath))
+                        {
+                        @foreach (var docPath in Model.OtherDocumentsPath.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                        {
+                        <a href="/@docPath.Trim()" target="_blank" class="document-link">
+                            <i class="fas fa-file mr-2"></i>
+                            @System.IO.Path.GetFileName(docPath.Trim())
+                        </a>
+                        }
+                        }
+                    </div>
+                </div>
+                }
+
+                <!-- Notes -->
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                    <h2 class="section-header">
+                        <i class="fas fa-sticky-note mr-2"></i>
+                        Uwagi
+                    </h2>
+
+                    <div class="info-value whitespace-pre-wrap">@Model.Notes</div>
+                </div>
+                }
+
+                <!-- Metadata -->
+                <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                    <h2 class="section-header">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Informacje systemowe
+                    </h2>
+
+                    <div class="space-y-1">
+                        <div class="info-item">
+                            <div class="info-label">Data utworzenia</div>
+                            <div class="info-value">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.CreatedBy))
+                        {
+                        <div class="info-item">
+                            <div class="info-label">Utworzono przez</div>
+                            <div class="info-value">@Model.CreatedBy</div>
+                        </div>
+                        }
+
+                        @if (Model.UpdatedAt.HasValue)
+                        {
+                        <div class="info-item">
+                            <div class="info-label">Ostatnia modyfikacja</div>
+                            <div class="info-value">@Model.UpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</div>
+                        </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.UpdatedBy))
+                        {
+                        <div class="info-item">
+                            <div class="info-label">Zmodyfikowano przez</div>
+                            <div class="info-value">@Model.UpdatedBy</div>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const sidebar = document.getElementById('sidebar');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+        });
+    }
+
+    // Delete employee function
+    window.deleteEmployee = function(employeeId) {
+        if (confirm('Czy na pewno chcesz usunąć tego pracownika? Ta operacja jest nieodwracalna.')) {
+            fetch(`@Url.Action("Delete", "Employee")`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: JSON.stringify({ id: employeeId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '@Url.Action("EmployeeList", "Employee")';
+                    } else {
+                        alert('Błąd: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd podczas usuwania pracownika.');
+                });
+        }
+    };
+
+    // Print functionality
+    window.printEmployee = function() {
+        window.print();
+    };
+
+    // Add print styles
+    const printStyles = `
+         print {
+            .action-button, header, .sidebar { display: none !important; }
+            .detail-card { box-shadow: none !important; border: 1px solid #ccc !important; }
+            body { background: white !important; color: black !important; }
+        }
+    `;
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = printStyles;
+    document.head.appendChild(styleSheet);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+            switch(e.key) {
+                case 'e':
+                    e.preventDefault();
+                    window.location.href = '@Url.Action("EmployeeEdit", "Employe", new { id = Model.EmployeeId })';
+                    break;
+                case 'p':
+                    e.preventDefault();
+                    printEmployee();
+                    break;
+            }
+        }
+        if (e.key === 'Escape') {
+            window.location.href = '@Url.Action("EmployeeList", "Employee")';
+        }
+    });
+
+    // Add tooltips for keyboard shortcuts
+    document.addEventListener('DOMContentLoaded', function() {
+        const editButton = document.querySelector('a[href*="Edit"]');
+        if (editButton) {
+            editButton.title = 'Edytuj pracownika (Ctrl+E)';
+        }
+    });
+</script>
+}
+
+@* Anti-forgery token for delete operations *@
+@Html.AntiForgeryToken()

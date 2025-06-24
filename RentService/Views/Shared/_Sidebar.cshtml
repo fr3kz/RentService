@@ -1,0 +1,131 @@
+@* Views/Shared/_Sidebar.cshtml *@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var currentPage = $"{currentController}/{currentAction}";
+}
+
+<div id="sidebar" class="bg-gray-800 shadow-lg transition-all duration-300 w-64 flex flex-col border-r border-gray-700 h-full">
+    <!-- Logo -->
+    <div class="p-4 border-b border-gray-700">
+        <div class="flex items-center">
+            <a href="@Url.Action("Index", "Home")" class="flex items-center hover:opacity-80 transition-opacity">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+                    R
+                </div>
+                <span id="logo-text" class="ml-3 text-xl font-semibold text-white">RentService</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-4 py-4 space-y-2">
+        <!-- Dashboard -->
+        <a href="@Url.Action("Index", "Home")" class="flex items-center hover:opacity-80 transition-opacity px-4 py-3 rounded-lg transition-colors ">
+
+        <i class="fas fa-tachometer-alt w-5"></i>
+            <span class="nav-text ml-3">Dashboard</span>
+        </a>
+
+        <!-- Pracownicy -->
+        <a href="@Url.Action("EmployeeList", "Employe")" class="flex items-center hover:opacity-80 transition-opacity px-4 py-3 rounded-lg transition-colors ">
+         
+            <i class="fas fa-users w-5"></i>
+            <span class="nav-text ml-3">Pracownicy</span>
+        </a>
+
+        <!-- Pojazdy -->
+        <a asp-area="VehicleModule"
+           asp-controller="Vehicle"
+           asp-action="Index"
+           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors hover:text-blue-400 hover:bg-gray-700 text-gray-300">
+            <i class="fas fa-car w-5"></i>
+            <span class="nav-text ml-3">Pojazdy</span>
+        </a>
+
+        <!-- Rezerwacje -->
+        <a href="@Url.Action("Logout", "Users")" 
+           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors
+                  @(currentController.Equals("Reservations", StringComparison.OrdinalIgnoreCase) ? 
+                    "text-blue-400 bg-blue-900/30" : 
+                    "text-gray-300 hover:text-blue-400 hover:bg-gray-700")">
+            <i class="fas fa-calendar-alt w-5"></i>
+            <span class="nav-text ml-3">Rezerwacje</span>
+        </a>
+
+        <!-- Analityka -->
+        <a href="@Url.Action("Index", "Analytics")" 
+           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors
+                  @(currentController.Equals("Analytics", StringComparison.OrdinalIgnoreCase) ? 
+                    "text-blue-400 bg-blue-900/30" : 
+                    "text-gray-300 hover:text-blue-400 hover:bg-gray-700")">
+            <i class="fas fa-chart-line w-5"></i>
+            <span class="nav-text ml-3">Analityka</span>
+        </a>
+
+        <!-- Płatności -->
+        <a href="@Url.Action("Index", "Payments")" 
+           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors
+                  @(currentController.Equals("Payments", StringComparison.OrdinalIgnoreCase) ? 
+                    "text-blue-400 bg-blue-900/30" : 
+                    "text-gray-300 hover:text-blue-400 hover:bg-gray-700")">
+            <i class="fas fa-dollar-sign w-5"></i>
+            <span class="nav-text ml-3">Płatności</span>
+        </a>
+
+        <!-- Raporty -->
+        <a href="@Url.Action("Index", "Reports")" 
+           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors
+                  @(currentController.Equals("Reports", StringComparison.OrdinalIgnoreCase) ? 
+                    "text-blue-400 bg-blue-900/30" : 
+                    "text-gray-300 hover:text-blue-400 hover:bg-gray-700")">
+            <i class="fas fa-file-alt w-5"></i>
+            <span class="nav-text ml-3">Raporty</span>
+        </a>
+
+        <!-- Separator -->
+        <div class="border-t border-gray-700 my-4"></div>
+
+        <!-- Ustawienia -->
+        <a href="@Url.Action("Index", "Settings")" 
+           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors
+                  @(currentController.Equals("Settings", StringComparison.OrdinalIgnoreCase) ? 
+                    "text-blue-400 bg-blue-900/30" : 
+                    "text-gray-300 hover:text-blue-400 hover:bg-gray-700")">
+            <i class="fas fa-cog w-5"></i>
+            <span class="nav-text ml-3">Ustawienia</span>
+        </a>
+    </nav>
+
+    <!-- User Profile -->
+    <div class="p-4 border-t border-gray-700">
+        <div class="flex items-center">
+            <img class="w-8 h-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face" alt="Avatar">
+            <div id="user-info" class="ml-3">
+                <p class="text-sm font-medium text-white">@User.Identity.Name</p>
+                <p class="text-xs text-gray-400">Administrator</p>
+            </div>
+        </div>
+
+        <form asp-controller="Users" asp-action="Logout" method="post" class="mt-3">
+            @Html.AntiForgeryToken()
+            <button type="submit"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:text-red-400 hover:bg-gray-700 rounded-lg transition-colors text-sm w-full text-left">
+                <i class="fas fa-sign-out-alt w-4"></i>
+                <span class="nav-text ml-3">Wyloguj</span>
+            </button>
+        </form>
+
+    </div>
+</div>
+
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+    .sidebar-collapsed #logo-text,
+    .sidebar-collapsed #user-info,
+    .sidebar-collapsed .nav-text {
+        display: none;
+    }
+</style>

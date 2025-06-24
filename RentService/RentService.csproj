@@ -13,8 +13,10 @@
       </Content>
       <Content Remove="Models\VehicleModule\**" />
     </ItemGroup>
-
+  
     <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.15" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
         <PrivateAssets>all</PrivateAssets>
@@ -41,6 +43,7 @@
 
     <ItemGroup>
       <_ContentIncludedByDefault Remove="Area\VehicleModule\Views\VehicleModule\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="wwwroot\css\site.css" />
     </ItemGroup>
 
 </Project>

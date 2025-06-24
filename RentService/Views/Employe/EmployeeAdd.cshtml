@@ -1,0 +1,577 @@
+@model RentService.Area.EmployeModule.Models.EmployeeCreateViewModel
+@{
+    ViewData["Title"] = "Dodaj Pracownika";
+    Layout = "_Layout";
+}
+
+@section Head {
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .form-card {
+        transition: all 0.3s ease;
+    }
+
+    .form-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        color: #d1d5db;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #374151;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #374151;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #374151;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+        color: white;
+        resize: vertical;
+        min-height: 100px;
+        transition: all 0.3s ease;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-textarea::placeholder {
+        color: #9ca3af;
+    }
+
+    .tab-button {
+        transition: all 0.3s ease;
+        background-color: #4b5563;
+        color: #d1d5db;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem 0.5rem 0 0;
+        cursor: pointer;
+        margin-right: 0.25rem;
+    }
+
+    .tab-button.active {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .tab-button:hover {
+        background-color: #6b7280;
+    }
+
+    .tab-button.active:hover {
+        background-color: #2563eb;
+    }
+
+    .tab-content {
+        display: none;
+        background-color: #1f2937;
+        padding: 2rem;
+        border-radius: 0 0.5rem 0.5rem 0.5rem;
+        border: 1px solid #374151;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .file-upload {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .file-upload input[type=file] {
+        position: absolute;
+        left: -9999px;
+    }
+
+    .file-upload-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background-color: #374151;
+        border: 2px dashed #4b5563;
+        border-radius: 0.5rem;
+        color: #d1d5db;
+        transition: all 0.3s ease;
+        width: 100%;
+        text-align: center;
+    }
+
+    .file-upload:hover .file-upload-label {
+        border-color: #3b82f6;
+        background-color: #4b5563;
+    }
+
+    .error-message {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .success-message {
+        color: #10b981;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .field-validation-error {
+        color: #ef4444;
+        font-size: 0.875rem;
+    }
+
+    .input-validation-error {
+        border-color: #ef4444 !important;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+  
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+    @await Html.PartialAsync("_Sidebar")
+    
+    <div class="flex-1 overflow-y-auto bg-gray-900 p-6">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-white mb-2">Dodaj Pracownika</h1>
+                <p class="text-gray-400">Wypełnij formularz aby dodać nowego pracownika do systemu</p>
+            </div>
+
+            @using (Html.BeginForm("EmployeeAdd", "Employe", FormMethod.Post, new { enctype = "multipart/form-data", @class = "space-y-6" }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(true, "", new { @class = "error-message mb-4" })
+
+                <!-- Tabs Navigation -->
+                <div class="tabs-container">
+                    <div class="tab-buttons flex">
+                        <button type="button" class="tab-button active" data-tab="personal">Dane osobowe</button>
+                        <button type="button" class="tab-button" data-tab="contact">Kontakt i adres</button>
+                        <button type="button" class="tab-button" data-tab="employment">Zatrudnienie</button>
+                        <button type="button" class="tab-button" data-tab="documents">Dokumenty</button>
+                    </div>
+
+                    <!-- Tab: Dane osobowe -->
+                    <div id="personal" class="tab-content active">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.FirstName, new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.Employee.FirstName, new { @class = "form-input", placeholder = "Wprowadź imię" })
+                                @Html.ValidationMessageFor(m => m.Employee.FirstName, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.LastName, new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.Employee.LastName, new { @class = "form-input", placeholder = "Wprowadź nazwisko" })
+                                @Html.ValidationMessageFor(m => m.Employee.LastName, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.Pesel, new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.Employee.Pesel, new { @class = "form-input", placeholder = "12345678901", maxlength = "11" })
+                                @Html.ValidationMessageFor(m => m.Employee.Pesel, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.BirthDate, new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.Employee.BirthDate, "{0:yyyy-MM-dd}", new { @class = "form-input", type = "date" })
+                                @Html.ValidationMessageFor(m => m.Employee.BirthDate, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.BirthPlace, new { @class = "form-label" })
+                                @Html.TextBoxFor(m => m.Employee.BirthPlace, new { @class = "form-input", placeholder = "Miejsce urodzenia" })
+                                @Html.ValidationMessageFor(m => m.Employee.BirthPlace, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.Gender, new { @class = "form-label required" })
+                                @Html.DropDownListFor(m => m.Employee.Gender, new SelectList(new[] {
+                                    new { Value = "", Text = "Wybierz płeć" },
+                                    new { Value = "Mężczyzna", Text = "Mężczyzna" },
+                                    new { Value = "Kobieta", Text = "Kobieta" }
+                                }, "Value", "Text"), new { @class = "form-select" })
+                                @Html.ValidationMessageFor(m => m.Employee.Gender, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.Nationality, new { @class = "form-label" })
+                                @Html.TextBoxFor(m => m.Employee.Nationality, new { @class = "form-input", placeholder = "Obywatelstwo" })
+                                @Html.ValidationMessageFor(m => m.Employee.Nationality, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.Education, new { @class = "form-label" })
+                                @Html.DropDownListFor(m => m.Employee.Education, new SelectList(new[] {
+                                    new { Value = "", Text = "Wybierz wykształcenie" },
+                                    new { Value = "Podstawowe", Text = "Podstawowe" },
+                                    new { Value = "Zawodowe", Text = "Zawodowe" },
+                                    new { Value = "Średnie", Text = "Średnie" },
+                                    new { Value = "Wyższe licencjackie", Text = "Wyższe licencjackie" },
+                                    new { Value = "Wyższe magisterskie", Text = "Wyższe magisterskie" },
+                                    new { Value = "Doktorat", Text = "Doktorat" }
+                                }, "Value", "Text"), new { @class = "form-select" })
+                                @Html.ValidationMessageFor(m => m.Employee.Education, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Kontakt i adres -->
+                    <div id="contact" class="tab-content">
+                        <h3 class="text-xl font-semibold text-white mb-4">Dane kontaktowe</h3>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.PersonalEmail, new { @class = "form-label" })
+                                @Html.TextBoxFor(m => m.Employee.PersonalEmail, new { @class = "form-input", type = "email", placeholder = "jan.kowalski@example.com" })
+                                @Html.ValidationMessageFor(m => m.Employee.PersonalEmail, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.PersonalPhone, new { @class = "form-label" })
+                                @Html.TextBoxFor(m => m.Employee.PersonalPhone, new { @class = "form-input", placeholder = "+48 123 456 789" })
+                                @Html.ValidationMessageFor(m => m.Employee.PersonalPhone, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-white mb-4 mt-8">Adres zamieszkania</h3>
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Employee.Street, new { @class = "form-label required" })
+                            @Html.TextBoxFor(m => m.Employee.Street, new { @class = "form-input", placeholder = "ul. Przykładowa 123/45" })
+                            @Html.ValidationMessageFor(m => m.Employee.Street, "", new { @class = "field-validation-error" })
+                        </div>
+
+                        <div class="grid-3">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.PostalCode, new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.Employee.PostalCode, new { @class = "form-input", placeholder = "00-000" })
+                                @Html.ValidationMessageFor(m => m.Employee.PostalCode, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.City, new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.Employee.City, new { @class = "form-input", placeholder = "Warszawa" })
+                                @Html.ValidationMessageFor(m => m.Employee.City, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.Country, new { @class = "form-label" })
+                                @Html.TextBoxFor(m => m.Employee.Country, new { @class = "form-input", placeholder = "Kraj" })
+                                @Html.ValidationMessageFor(m => m.Employee.Country, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Zatrudnienie -->
+                    <div id="employment" class="tab-content">
+                        <div class="grid-1">
+                          
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Employee.HireDate, new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.Employee.HireDate, "{0:yyyy-MM-dd}", new { @class = "form-input", type = "date" })
+                                @Html.ValidationMessageFor(m => m.Employee.HireDate, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Employee.ContractType, new { @class = "form-label required" })
+                            @Html.DropDownListFor(m => m.Employee.ContractType, new SelectList(new[] {
+                                new { Value = "", Text = "Wybierz typ umowy" },
+                                new { Value = "Umowa o pracę", Text = "Umowa o pracę" },
+                                new { Value = "Umowa zlecenie", Text = "Umowa zlecenie" },
+                                new { Value = "Umowa o dzieło", Text = "Umowa o dzieło" },
+                                new { Value = "Kontrakt B2B", Text = "Kontrakt B2B" }
+                            }, "Value", "Text"), new { @class = "form-select" })
+                            @Html.ValidationMessageFor(m => m.Employee.ContractType, "", new { @class = "field-validation-error" })
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Employee.Notes, new { @class = "form-label" })
+                            @Html.TextAreaFor(m => m.Employee.Notes, new { @class = "form-textarea", placeholder = "Dodatkowe uwagi..." })
+                            @Html.ValidationMessageFor(m => m.Employee.Notes, "", new { @class = "field-validation-error" })
+                        </div>
+                    </div>
+
+                    <!-- Tab: Dokumenty -->
+                    <div id="documents" class="tab-content">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Photo, new { @class = "form-label" })
+                                <div class="file-upload">
+                                    @Html.TextBoxFor(m => m.Photo, new { type = "file", accept = "image/*" })
+                                    <label for="Photo" class="file-upload-label">
+                                        <i class="fas fa-upload mr-2"></i>
+                                        Wybierz zdjęcie pracownika
+                                    </label>
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Photo, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Cv, new { @class = "form-label" })
+                                <div class="file-upload">
+                                    @Html.TextBoxFor(m => m.Cv, new { type = "file", accept = ".pdf,.doc,.docx" })
+                                    <label for="Cv" class="file-upload-label">
+                                        <i class="fas fa-file-alt mr-2"></i>
+                                        Wybierz CV
+                                    </label>
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Cv, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Contract, new { @class = "form-label" })
+                                <div class="file-upload">
+                                    @Html.TextBoxFor(m => m.Contract, new { type = "file", accept = ".pdf,.doc,.docx" })
+                                    <label for="Contract" class="file-upload-label">
+                                        <i class="fas fa-file-contract mr-2"></i>
+                                        Wybierz umowę o pracę
+                                    </label>
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Contract, "", new { @class = "field-validation-error" })
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.IdCopy, new { @class = "form-label" })
+                                <div class="file-upload">
+                                    @Html.TextBoxFor(m => m.IdCopy, new { type = "file", accept = "image/*,.pdf" })
+                                    <label for="IdCopy" class="file-upload-label">
+                                        <i class="fas fa-id-card mr-2"></i>
+                                        Wybierz kopię dowodu
+                                    </label>
+                                </div>
+                                @Html.ValidationMessageFor(m => m.IdCopy, "", new { @class = "field-validation-error" })
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.OtherDocuments, new { @class = "form-label" })
+                            <div class="file-upload">
+                                <input type="file" name="OtherDocuments" id="OtherDocuments" multiple accept=".pdf,.doc,.docx,image/*">
+                                <label for="OtherDocuments" class="file-upload-label">
+                                    <i class="fas fa-folder mr-2"></i>
+                                    Wybierz inne dokumenty (można wybrać wiele)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-700">
+                    <a href="@Url.Action("Index", "Employee")" class="btn-secondary">Anuluj</a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i>
+                        Dodaj Pracownika
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Tab switching functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding content
+                this.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        // File upload labels update
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const label = this.nextElementSibling;
+                if (this.files.length > 0) {
+                    if (this.files.length === 1) {
+                        label.textContent = this.files[0].name;
+                    } else {
+                        label.textContent = `Wybrano ${this.files.length} plików`;
+                    }
+                    label.style.color = '#10b981';
+                }
+            });
+        });
+
+        // Form validation enhancement
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const requiredFields = document.querySelectorAll('.form-input[data-val-required], .form-select[data-val-required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('input-validation-error');
+                    isValid = false;
+                } else {
+                    field.classList.remove('input-validation-error');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                // Switch to first tab with errors
+                const firstErrorField = document.querySelector('.input-validation-error');
+                if (firstErrorField) {
+                    const tabContent = firstErrorField.closest('.tab-content');
+                    if (tabContent) {
+                        const tabId = tabContent.id;
+                        const tabButton = document.querySelector(`[data-tab="${tabId}"]`);
+                        if (tabButton) {
+                            tabButton.click();
+                        }
+                    }
+                }
+            }
+        });
+
+        // PESEL validation
+        const peselInput = document.querySelector('input[name="Employee.Pesel"]');
+        if (peselInput) {
+            peselInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').substring(0, 11);
+            });
+        }
+
+        // Postal code formatting
+        const postalCodeInput = document.querySelector('input[name="Employee.PostalCode"]');
+        if (postalCodeInput) {
+            postalCodeInput.addEventListener('input', function() {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.substring(0, 2) + '-' + value.substring(2, 5);
+                }
+                this.value = value;
+            });
+        }
+    });
+</script>
+}
