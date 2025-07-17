@@ -2,6 +2,10 @@ namespace RentService.Models.VehicleModule;
 
 public class Vehicle
 {
+   public Vehicle()
+   {
+      ExploitationParts = new List<ExploitationPart>();
+   }
    public int ID { get;  private set; }
    public string Model { get; set; }
    public string RegistrationNumber { get; set; }

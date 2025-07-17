@@ -64,10 +64,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapAreaControllerRoute(
-    name: "VehicleModule",
-    areaName: "VehicleModule",
-    pattern: "{area:exists}/{controller=Vehicle}/{action=Index}/{id?}");
 
 app.Run();
 

@@ -1,0 +1,640 @@
+@{
+    ViewData["Title"] = "Dodaj pojazd";
+    Layout = "_Layout";
+}
+
+@model RentService.Models.VehicleModule.Vehicle
+
+@section Head {
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #e5e7eb;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 0.5rem;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-error {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .form-help {
+        color: #9ca3af;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .required::after {
+        content: " *";
+        color: #ef4444;
+    }
+
+    .form-section {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #374151;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .form-grid-full {
+        grid-column: 1 / -1;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: #ffffff;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+
+    .btn-secondary {
+        background-color: #6b7280;
+        color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .checkbox-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        accent-color: #3b82f6;
+    }
+
+    .price-input-container {
+        position: relative;
+    }
+
+    .price-input-container::after {
+        content: "zł";
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        pointer-events: none;
+    }
+
+    .mileage-input-container {
+        position: relative;
+    }
+
+    .mileage-input-container::after {
+        content: "km";
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        pointer-events: none;
+    }
+
+   
+
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .validation-summary {
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .validation-summary ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .validation-summary li {
+        margin-bottom: 0.25rem;
+    }
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <nav class="ml-4 flex items-center space-x-2 text-sm text-gray-400">
+                        <a href="@Url.Action("Index", "Vehicle")" class="hover:text-white transition-colors">
+                            <i class="fas fa-car mr-1"></i>
+                            Pojazdy
+                        </a>
+                        <i class="fas fa-chevron-right text-xs"></i>
+                        <span class="text-white">Dodaj pojazd</span>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-400 hover:text-white relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">3</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+            <div class="form-container">
+                
+                <!-- Page Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Dodaj nowy pojazd</h1>
+                    <p class="text-gray-400">Wprowadź dane nowego pojazdu do systemu wynajmu</p>
+                </div>
+
+                <!-- Validation Summary -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="validation-summary">
+                        <h4 class="font-semibold mb-2">Wystąpiły błędy walidacji:</h4>
+                        <ul>
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>• @error.ErrorMessage</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <!-- Form -->
+                @using (Html.BeginForm("VehicleAdd", "Vehicle", FormMethod.Post, new { @class = "space-y-6" }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Podstawowe informacje
+                        </h2>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Model, "Model pojazdu", new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.Model, new { @class = "form-input", placeholder = "np. Toyota Corolla", maxlength = "100" })
+                                @Html.ValidationMessageFor(m => m.Model, "", new { @class = "form-error" })
+                                <div class="form-help">Wprowadź markę i model pojazdu</div>
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.RegistrationNumber, "Numer rejestracyjny", new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.RegistrationNumber, new { @class = "form-input", placeholder = "np. ABC 1234", maxlength = "20", style = "text-transform: uppercase;" })
+                                @Html.ValidationMessageFor(m => m.RegistrationNumber, "", new { @class = "form-error" })
+                                <div class="form-help">Format: ABC 1234 lub ABC1234</div>
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.YearOfManufacture, "Rok produkcji", new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.YearOfManufacture, new { @class = "form-input", @type = "date", max = DateTime.Now.ToString("yyyy-MM-dd") })
+                                @Html.ValidationMessageFor(m => m.YearOfManufacture, "", new { @class = "form-error" })
+                                <div class="form-help">Data produkcji pojazdu</div>
+                            </div>
+
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Color, "Kolor", new { @class = "form-label required" })
+                                @Html.DropDownListFor(m => m.Color, new List<SelectListItem>
+                                {
+                                    new SelectListItem { Text = "Wybierz kolor", Value = "", Selected = true },
+                                    new SelectListItem { Text = "Biały", Value = "Biały" },
+                                    new SelectListItem { Text = "Czarny", Value = "Czarny" },
+                                    new SelectListItem { Text = "Srebrny", Value = "Srebrny" },
+                                    new SelectListItem { Text = "Szary", Value = "Szary" },
+                                    new SelectListItem { Text = "Czerwony", Value = "Czerwony" },
+                                    new SelectListItem { Text = "Niebieski", Value = "Niebieski" },
+                                    new SelectListItem { Text = "Zielony", Value = "Zielony" },
+                                    new SelectListItem { Text = "Żółty", Value = "Żółty" },
+                                    new SelectListItem { Text = "Brązowy", Value = "Brązowy" },
+                                    new SelectListItem { Text = "Inny", Value = "Inny" }
+                                }, new { @class = "form-select" })
+                                @Html.ValidationMessageFor(m => m.Color, "", new { @class = "form-error" })
+                            </div>
+
+                            <div class="form-group form-grid-full">
+                                @Html.LabelFor(m => m.VIN, "Numer VIN", new { @class = "form-label required" })
+                                @Html.TextBoxFor(m => m.VIN, new { @class = "form-input", placeholder = "17-znakowy kod VIN", maxlength = "17", style = "text-transform: uppercase;" })
+                                @Html.ValidationMessageFor(m => m.VIN, "", new { @class = "form-error" })
+                                <div class="form-help">Unikalny 17-znakowy identyfikator pojazdu</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Information Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">
+                            <i class="fas fa-dollar-sign mr-2"></i>
+                            Informacje finansowe
+                        </h2>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.DailyRentalPrice, "Cena wynajmu dziennego", new { @class = "form-label required" })
+                                <div class="price-input-container">
+                                    @Html.TextBoxFor(m => m.DailyRentalPrice, new { @class = "form-input", @type = "number", min = "0", step = "0.01", placeholder = "0.00" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.DailyRentalPrice, "", new { @class = "form-error" })
+                                <div class="form-help">Cena za jeden dzień wynajmu w złotych</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Status dostępności</label>
+                                <div class="checkbox-container">
+                                    @Html.CheckBoxFor(m => m.IsAvailable, new { @class = "checkbox-input", @checked = "checked" })
+                                    @Html.LabelFor(m => m.IsAvailable, "Pojazd dostępny do wynajmu", new { @class = "text-gray-300" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.IsAvailable, "", new { @class = "form-error" })
+                                <div class="form-help">Zaznacz, jeśli pojazd ma być dostępny do wynajmu</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Technical Information Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">
+                            <i class="fas fa-cog mr-2"></i>
+                            Informacje techniczne
+                        </h2>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Mileage, "Przebieg", new { @class = "form-label required" })
+                                <div class="mileage-input-container">
+                                    @Html.TextBoxFor(m => m.Mileage, new { @class = "form-input", @type = "number", min = "0", step = "1", placeholder = "0" })
+                                </div>
+                                @Html.ValidationMessageFor(m => m.Mileage, "", new { @class = "form-error" })
+                                <div class="form-help">Aktualny przebieg pojazdu w kilometrach</div>
+                            </div>
+
+                            <div class="form-group form-grid-full">
+                                @Html.LabelFor(m => m.Notes, "Uwagi", new { @class = "form-label" })
+                                @Html.TextAreaFor(m => m.Notes, new { @class = "form-textarea", placeholder = "Dodatkowe informacje o pojeździe...", maxlength = "500" })
+                                @Html.ValidationMessageFor(m => m.Notes, "", new { @class = "form-error" })
+                                <div class="form-help">Opcjonalne uwagi dotyczące pojazdu (maksymalnie 500 znaków)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <a href="@Url.Action("Index", "Vehicle")" class="btn btn-secondary">
+                            <i class="fas fa-times mr-2"></i>
+                            Anuluj
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-save mr-2"></i>
+                            Dodaj pojazd
+                        </button>
+                    </div>
+                }
+
+            </div>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const userInfo = document.getElementById('user-info');
+    const navTexts = document.querySelectorAll('.nav-text');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                if (logoText) logoText.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                navTexts.forEach(text => text.style.display = 'none');
+            } else {
+                if (logoText) logoText.style.display = 'block';
+                if (userInfo) userInfo.style.display = 'block';
+                navTexts.forEach(text => text.style.display = 'block');
+            }
+        });
+    }
+
+    // Auto-uppercase for registration number and VIN
+    document.addEventListener('DOMContentLoaded', function() {
+        const registrationInput = document.getElementById('RegistrationNumber');
+        const vinInput = document.getElementById('VIN');
+
+        if (registrationInput) {
+            registrationInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+        }
+
+        if (vinInput) {
+            vinInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+        }
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const requiredFields = document.querySelectorAll('input[required], select[required]');
+        let isValid = true;
+        
+        // Clear previous errors
+        document.querySelectorAll('.form-error').forEach(error => {
+            if (!error.dataset.valmsg) { // Don't clear server validation messages
+                error.textContent = '';
+            }
+        });
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                const errorElement = field.parentNode.querySelector('.form-error');
+                if (errorElement && !errorElement.dataset.valmsg) {
+                    errorElement.textContent = 'To pole jest wymagane';
+                }
+                field.classList.add('border-red-500');
+            } else {
+                field.classList.remove('border-red-500');
+            }
+        });
+
+        // VIN validation (17 characters)
+        const vinInput = document.getElementById('VIN');
+        if (vinInput && vinInput.value && vinInput.value.length !== 17) {
+            isValid = false;
+            const errorElement = vinInput.parentNode.querySelector('.form-error');
+            if (errorElement && !errorElement.dataset.valmsg) {
+                errorElement.textContent = 'Numer VIN musi mieć dokładnie 17 znaków';
+            }
+            vinInput.classList.add('border-red-500');
+        }
+
+        // Price validation (must be positive)
+        const priceInput = document.getElementById('DailyRentalPrice');
+        if (priceInput && priceInput.value && parseFloat(priceInput.value) <= 0) {
+            isValid = false;
+            const errorElement = priceInput.parentNode.querySelector('.form-error');
+            if (errorElement && !errorElement.dataset.valmsg) {
+                errorElement.textContent = 'Cena musi być większa od 0';
+            }
+            priceInput.classList.add('border-red-500');
+        }
+
+        // Mileage validation (must be non-negative)
+        const mileageInput = document.getElementById('Mileage');
+        if (mileageInput && mileageInput.value && parseFloat(mileageInput.value) < 0) {
+            isValid = false;
+            const errorElement = mileageInput.parentNode.querySelector('.form-error');
+            if (errorElement && !errorElement.dataset.valmsg) {
+                errorElement.textContent = 'Przebieg nie może być ujemny';
+            }
+            mileageInput.classList.add('border-red-500');
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            // Scroll to first error
+            const firstError = document.querySelector('.border-red-500');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        } else {
+            // Show loading state
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Dodawanie...';
+            submitBtn.disabled = true;
+        }
+    });
+
+    // Real-time validation feedback
+    document.querySelectorAll('.form-input, .form-select').forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.classList.add('border-red-500');
+            } else {
+                this.classList.remove('border-red-500');
+                const errorElement = this.parentNode.querySelector('.form-error');
+                if (errorElement && !errorElement.dataset.valmsg) {
+                    errorElement.textContent = '';
+                }
+            }
+        });
+
+        input.addEventListener('input', function() {
+            if (this.classList.contains('border-red-500') && this.value.trim()) {
+                this.classList.remove('border-red-500');
+                const errorElement = this.parentNode.querySelector('.form-error');
+                if (errorElement && !errorElement.dataset.valmsg) {
+                    errorElement.textContent = '';
+                }
+            }
+        });
+    });
+
+    // Registration number formatting
+    document.getElementById('RegistrationNumber')?.addEventListener('input', function(e) {
+        let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        
+        // Format: ABC 1234 or ABC1234
+        if (value.length > 3) {
+            value = value.substring(0, 3) + ' ' + value.substring(3, 7);
+        }
+        
+        e.target.value = value;
+    });
+
+    // Character counter for notes
+    const notesTextarea = document.getElementById('Notes');
+    if (notesTextarea) {
+        const maxLength = 500;
+        const helpText = notesTextarea.parentNode.querySelector('.form-help');
+        
+        notesTextarea.addEventListener('input', function() {
+            const remaining = maxLength - this.value.length;
+            helpText.textContent = `Opcjonalne uwagi dotyczące pojazdu (pozostało ${remaining} znaków)`;
+            
+            if (remaining < 0) {
+                this.classList.add('border-red-500');
+                helpText.classList.add('text-red-400');
+            } else {
+                this.classList.remove('border-red-500');
+                helpText.classList.remove('text-red-400');
+            }
+        });
+    }
+
+    // Auto-save to localStorage (draft functionality)
+    const formInputs = document.querySelectorAll('.form-input, .form-select, .form-textarea, .checkbox-input');
+    const formKey = 'vehicle_add_draft';
+
+    // Load draft on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const draft = localStorage.getItem(formKey);
+        if (draft) {
+            const draftData = JSON.parse(draft);
+            Object.keys(draftData).forEach(key => {
+                const input = document.getElementById(key);
+                if (input) {
+                    if (input.type === 'checkbox') {
+                        input.checked = draftData[key];
+                    } else {
+                        input.value = draftData[key];
+                    }
+                }
+            });
+        }
+    });
+
+    // Save draft on input change
+    formInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const formData = {};
+            formInputs.forEach(inp => {
+                if (inp.id) {
+                    formData[inp.id] = inp.type === 'checkbox' ? inp.checked : inp.value;
+                }
+            });
+            localStorage.setItem(formKey, JSON.stringify(formData));
+        });
+    });
+
+    // Clear draft on successful submit
+    document.querySelector('form').addEventListener('submit', function() {
+        setTimeout(() => {
+            localStorage.removeItem(formKey);
+        }, 1000);
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S to save
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            document.querySelector('form').submit();
+        }
+        
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            if (confirm('Czy na pewno chcesz anulować? Niezapisane zmiany zostaną utracone.')) {
+                window.location.href = '@Url.Action("Index", "Vehicle")';
+            }
+        }
+    });
+
+    // Confirm navigation away with unsaved changes
+    let formChanged = false;
+    formInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            formChanged = true;
+        });
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // Mark form as submitted to prevent beforeunload
+    document.querySelector('form').addEventListener('submit', function() {
+        formChanged = false;
+    });
+</script>
+}

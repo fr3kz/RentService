@@ -35,11 +35,8 @@
         </a>
 
         <!-- Pojazdy -->
-        <a asp-area="VehicleModule"
-           asp-controller="Vehicle"
-           asp-action="Index"
-           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors hover:text-blue-400 hover:bg-gray-700 text-gray-300">
-            <i class="fas fa-car w-5"></i>
+        <a href="@Url.Action("VehicleList", "Vehicle")" class="flex items-center hover:opacity-80 transition-opacity px-4 py-3 rounded-lg transition-colors ">
+            <i class="fas fa-users w-5"></i>
             <span class="nav-text ml-3">Pojazdy</span>
         </a>
 

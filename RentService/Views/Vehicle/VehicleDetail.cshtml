@@ -1,0 +1,762 @@
+@{
+    ViewData["Title"] = "Szczegóły pojazdu";
+    Layout = "_Layout";
+}
+
+@model RentService.Models.VehicleModule.Vehicle
+
+@section Head {
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .detail-card {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .detail-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #374151;
+    }
+
+    .detail-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin: 0;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .status-available {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: rgb(16, 185, 129);
+    }
+
+    .status-unavailable {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: rgb(239, 68, 68);
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .detail-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .detail-value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .detail-value-large {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #3b82f6;
+    }
+
+    .vehicle-image-container {
+        width: 200px;
+        height: 150px;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: #ffffff;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+
+    .btn-secondary {
+        background-color: #6b7280;
+        color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+
+    .btn-warning {
+        background-color: #f59e0b;
+        color: #ffffff;
+    }
+
+    .btn-warning:hover {
+        background-color: #d97706;
+    }
+
+    .btn-danger {
+        background-color: #ef4444;
+        color: #ffffff;
+    }
+
+    .btn-danger:hover {
+        background-color: #dc2626;
+    }
+
+    .parts-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .parts-table th,
+    .parts-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #374151;
+    }
+
+    .parts-table th {
+        background-color: #374151;
+        font-weight: 600;
+        color: #e5e7eb;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .parts-table td {
+        color: #d1d5db;
+    }
+
+    .parts-table tbody tr:hover {
+        background-color: #374151;
+    }
+
+    .condition-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .condition-new { background-color: rgba(16, 185, 129, 0.2); color: rgb(16, 185, 129); }
+    .condition-good { background-color: rgba(34, 197, 94, 0.2); color: rgb(34, 197, 94); }
+    .condition-worn { background-color: rgba(251, 191, 36, 0.2); color: rgb(251, 191, 36); }
+    .condition-damaged { background-color: rgba(239, 68, 68, 0.2); color: rgb(239, 68, 68); }
+    .condition-replaced { background-color: rgba(168, 85, 247, 0.2); color: rgb(168, 85, 247); }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background-color: #374151;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #9ca3af;
+    }
+
+    .notes-section {
+        background-color: #374151;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .vehicle-card {
+        transition: all 0.3s ease;
+    }
+
+    .vehicle-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-available {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: rgb(16, 185, 129);
+    }
+
+    .status-unavailable {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: rgb(239, 68, 68);
+    }
+
+    .search-box {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        transition: border-color 0.3s ease;
+    }
+
+    .search-box:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+
+    .vehicle-info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.25rem 0;
+        font-size: 0.875rem;
+    }
+
+    .vehicle-info-item:not(:last-child) {
+        border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+    }
+
+    .vehicle-placeholder {
+        width: 5rem;
+        height: 5rem;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .price-tag {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <nav class="ml-4 flex items-center space-x-2 text-sm text-gray-400">
+                        <a href="@Url.Action("Index", "Vehicle")" class="hover:text-white transition-colors">
+                            <i class="fas fa-car mr-1"></i>
+                            Pojazdy
+                        </a>
+                        <i class="fas fa-chevron-right text-xs"></i>
+                        <span class="text-white">@Model.Model</span>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-400 hover:text-white relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">3</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+            
+            <!-- Vehicle Header -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <div class="flex items-center gap-6">
+                        <div class="vehicle-image-container">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">@Model.Model</h1>
+                            <p class="text-xl text-gray-300 mb-3">@Model.RegistrationNumber</p>
+                            <span class="status-badge @(Model.IsAvailable ? "status-available" : "status-unavailable")">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                @(Model.IsAvailable ? "Dostępny" : "Niedostępny")
+                            </span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="@Url.Action("Edit", "Vehicle", new { id = Model.ID })" class="btn btn-primary">
+                            <i class="fas fa-edit mr-2"></i>
+                            Edytuj
+                        </a>
+                        <button onclick="toggleAvailability(@Model.ID)" class="btn btn-warning">
+                            <i class="fas fa-toggle-on mr-2"></i>
+                            @(Model.IsAvailable ? "Ustaw niedostępny" : "Ustaw dostępny")
+                        </button>
+                        <button onclick="deleteVehicle(@Model.ID)" class="btn btn-danger">
+                            <i class="fas fa-trash mr-2"></i>
+                            Usuń
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon text-green-400">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-value">@Model.DailyRentalPrice.ToString("C0")</div>
+                        <div class="stat-label">Cena dzienna</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon text-blue-400">
+                            <i class="fas fa-road"></i>
+                        </div>
+                        <div class="stat-value">@Model.Mileage.ToString("N0") km</div>
+                        <div class="stat-label">Przebieg</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon text-yellow-400">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-value">@Model.YearOfManufacture.Year</div>
+                        <div class="stat-label">Rok produkcji</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon text-purple-400">
+                            <i class="fas fa-birthday-cake"></i>
+                        </div>
+                        <div class="stat-value">@Math.Round((DateTime.Now - Model.YearOfManufacture).TotalDays / 365.25, 1) lat</div>
+                        <div class="stat-label">Wiek pojazdu</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle Details -->
+            <div class="detail-card">
+                <h2 class="detail-title">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Szczegółowe informacje
+                </h2>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Model pojazdu</span>
+                        <span class="detail-value">@Model.Model</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Numer rejestracyjny</span>
+                        <span class="detail-value">@Model.RegistrationNumber</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Kolor</span>
+                        <span class="detail-value">@Model.Color</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Rok produkcji</span>
+                        <span class="detail-value">@Model.YearOfManufacture.ToString("yyyy")</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Numer VIN</span>
+                        <span class="detail-value" style="font-family: monospace; font-size: 0.875rem;">@Model.VIN</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Cena wynajmu dziennego</span>
+                        <span class="detail-value-large">@Model.DailyRentalPrice.ToString("C2")</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Przebieg</span>
+                        <span class="detail-value">@Model.Mileage.ToString("N0") km</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status dostępności</span>
+                        <span class="detail-value @(Model.IsAvailable ? "text-green-400" : "text-red-400")">
+                            @(Model.IsAvailable ? "Dostępny" : "Niedostępny")
+                        </span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                {
+                    <div class="notes-section">
+                        <h3 class="text-lg font-semibold text-white mb-3">
+                            <i class="fas fa-sticky-note mr-2"></i>
+                            Uwagi
+                        </h3>
+                        <p class="text-gray-300 leading-relaxed">@Model.Notes</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Exploitation Parts -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h2 class="detail-title">
+                        <i class="fas fa-cogs mr-2"></i>
+                        Części eksploatacyjne
+                    </h2>
+                    <button class="btn btn-primary" onclick="addExploitationPart(@Model.ID)">
+                        <i class="fas fa-plus mr-2"></i>
+                        Dodaj część
+                    </button>
+                </div>
+
+                @if (Model.ExploitationParts != null && Model.ExploitationParts.Any())
+                {
+                    <div class="overflow-x-auto">
+                        <table class="parts-table">
+                            <thead>
+                                <tr>
+                                    <th>Typ części</th>
+                                    <th>Nazwa</th>
+                                    <th>Stan</th>
+                                    <th>Przebieg total</th>
+                                    <th>Przebieg aktualny</th>
+                                    <th>Ostatnia wymiana</th>
+                                    <th>Kolejna wymiana</th>
+                                    <th>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var part in Model.ExploitationParts.OrderBy(p => p.PartType))
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="font-medium">@part.PartType.ToString()</span>
+                                        </td>
+                                        <td>@part.PartName</td>
+                                        <td>
+                                            <span class="condition-badge condition-@part.PartCondition.ToString().ToLower()">
+                                                @part.PartCondition.ToString()
+                                            </span>
+                                        </td>
+                                        <td>@part.TotalKm.ToString("N0") km</td>
+                                        <td>@part.CurrentKm.ToString("N0") km</td>
+                                        <td>@part.LastReplacementDate.ToString("dd.MM.yyyy")</td>
+                                        <td>@part.NextReplacementDueDate.ToString("dd.MM.yyyy")</td>
+                                        <td>
+                                            <div class="flex gap-1">
+                                                <button onclick="editPart(@part.ID)" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button onclick="deletePart(@part.ID)" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-cogs"></i>
+                        <h3 class="text-lg font-semibold mb-2">Brak części eksploatacyjnych</h3>
+                        <p class="text-sm">Ten pojazd nie ma jeszcze zarejestrowanych części eksploatacyjnych.</p>
+                        <button class="btn btn-primary mt-4" onclick="addExploitationPart(@Model.ID)">
+                            <i class="fas fa-plus mr-2"></i>
+                            Dodaj pierwszą część
+                        </button>
+                    </div>
+                }
+            </div>
+
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const userInfo = document.getElementById('user-info');
+    const navTexts = document.querySelectorAll('.nav-text');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                if (logoText) logoText.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                navTexts.forEach(text => text.style.display = 'none');
+            } else {
+                if (logoText) logoText.style.display = 'block';
+                if (userInfo) userInfo.style.display = 'block';
+                navTexts.forEach(text => text.style.display = 'block');
+            }
+        });
+    }
+
+    // Toggle availability function
+    function toggleAvailability(vehicleId) {
+        if (!confirm('Czy na pewno chcesz zmienić dostępność tego pojazdu?')) {
+            return;
+        }
+
+        fetch(`@Url.Action("ToggleAvailability", "Vehicle")/${vehicleId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Błąd: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Wystąpił błąd podczas zmiany dostępności pojazdu.');
+        });
+    }
+
+    // Delete vehicle function
+    function deleteVehicle(vehicleId) {
+        if (!confirm('Czy na pewno chcesz usunąć ten pojazd? Ta operacja jest nieodwracalna.')) {
+            return;
+        }
+
+        fetch(`@Url.Action("Delete", "Vehicle")/${vehicleId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = '@Url.Action("Index", "Vehicle")';
+            } else {
+                alert('Błąd: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Wystąpił błąd podczas usuwania pojazdu.');
+        });
+    }
+
+    // Add exploitation part function
+    function addExploitationPart(vehicleId) {
+        // Navigate to add exploitation part page
+        window.location.href = `@Url.Action("Add", "ExploitationPart")?vehicleId=${vehicleId}`;
+    }
+
+    // Edit exploitation part function
+    function editPart(partId) {
+        window.location.href = `@Url.Action("Edit", "ExploitationPart")/${partId}`;
+    }
+
+    // Delete exploitation part function
+    function deletePart(partId) {
+        if (!confirm('Czy na pewno chcesz usunąć tę część eksploatacyjną?')) {
+            return;
+        }
+
+        fetch(`@Url.Action("Delete", "ExploitationPart")/${partId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Błąd: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Wystąpił błąd podczas usuwania części eksploatacyjnej.');
+        });
+    }
+
+    // Print functionality
+    function printVehicleDetails() {
+        window.print();
+    }
+
+    // Copy VIN to clipboard
+    document.addEventListener('DOMContentLoaded', function() {
+        const vinElement = document.querySelector('[style*="font-family: monospace"]');
+        if (vinElement) {
+            vinElement.addEventListener('click', function() {
+                navigator.clipboard.writeText(this.textContent).then(() => {
+                    // Show tooltip or notification
+                    const originalText = this.textContent;
+                    this.textContent = 'Skopiowano!';
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                    }, 1000);
+                });
+            });
+            vinElement.style.cursor = 'pointer';
+            vinElement.title = 'Kliknij aby skopiować VIN';
+        }
+    });
+
+    // Auto-refresh status (every 30 seconds)
+    setInterval(() => {
+        // Subtle check for status changes
+        fetch(`@Url.Action("GetAvailableVehicles", "Vehicle")`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const currentVehicle = data.vehicles.find(v => v.id === @Model.ID);
+                    if (currentVehicle) {
+                        const statusBadge = document.querySelector('.status-badge');
+                        const currentlyAvailable = statusBadge.classList.contains('status-available');
+                        
+                        if (currentVehicle.isAvailable !== undefined && currentVehicle.isAvailable !== currentlyAvailable) {
+                            // Status changed, reload page
+                            location.reload();
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.log('Status check failed:', error);
+            });
+    }, 30000);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // E key to edit
+        if (e.key === 'e' && !e.ctrlKey && !e.altKey) {
+            const activeElement = document.activeElement;
+            if (activeElement.tagName !== 'INPUT' && activeElement.tagName !== 'TEXTAREA') {
+                window.location.href = '@Url.Action("Edit", "Vehicle", new { id = Model.ID })';
+            }
+        }
+        
+        // Escape to go back
+        if (e.key === 'Escape') {
+            window.location.href = '@Url.Action("Index", "Vehicle")';
+        }
+    });
+
+    // Add animation on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.detail-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+
+@Html.AntiForgeryToken()
+}

@@ -1,0 +1,654 @@
+@{
+    ViewData["Title"] = "Pojazdy";
+    Layout = "_Layout";
+}
+
+@model IEnumerable<RentService.Models.VehicleModule.Vehicle>
+
+@section Head {
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .vehicle-card {
+        transition: all 0.3s ease;
+    }
+
+    .vehicle-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-available {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: rgb(16, 185, 129);
+    }
+
+    .status-unavailable {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: rgb(239, 68, 68);
+    }
+
+    .search-box {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        transition: border-color 0.3s ease;
+    }
+
+    .search-box:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+
+    .vehicle-info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.25rem 0;
+        font-size: 0.875rem;
+    }
+
+    .vehicle-info-item:not(:last-child) {
+        border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+    }
+
+    .vehicle-placeholder {
+        width: 5rem;
+        height: 5rem;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .price-tag {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <h1 class="ml-4 text-2xl font-semibold text-white">Pojazdy</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="@Url.Action("VehicleAdd", "Vehicle")"
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Dodaj pojazd
+                    </a>
+                    <button class="text-gray-400 hover:text-white relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">3</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-600/20 text-blue-400">
+                            <i class="fas fa-car text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-400">Wszystkie pojazdy</p>
+                            <p class="text-2xl font-semibold text-white">@(Model?.Count() ?? 0)</p>
+                            <p class="text-sm text-green-400">W flotie</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-600/20 text-green-400">
+                            <i class="fas fa-check-circle text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-400">Dostępne</p>
+                            <p class="text-2xl font-semibold text-white">
+                                @(Model?.Count(v => v.IsAvailable) ?? 0)
+                            </p>
+                            <p class="text-sm text-blue-400">do wynajmu</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-600/20 text-purple-400">
+                            <i class="fas fa-calendar-alt text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-400">Średni wiek</p>
+                            <p class="text-2xl font-semibold text-white">
+                                @if (Model != null && Model.Any())
+                                {
+                                    @(Math.Round(Model.Average(v => (DateTime.Now - v.YearOfManufacture).TotalDays / 365.25), 1))
+                                }
+                                else
+                                {
+                                    <text>0</text>
+                                }
+                            </p>
+                            <p class="text-sm text-gray-400">lat</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-600/20 text-yellow-400">
+                            <i class="fas fa-dollar-sign text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-400">Średnia cena</p>
+                            <p class="text-2xl font-semibold text-white">
+                                @if (Model != null && Model.Any())
+                                {
+                                    @(Math.Round(Model.Average(v => v.DailyRentalPrice), 0))
+                                }
+                                else
+                                {
+                                    <text>0</text>
+                                }
+                            </p>
+                            <p class="text-sm text-gray-400">zł/dzień</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex-1 max-w-md">
+                        <div class="relative">
+                            <input type="text"
+                                   id="searchInput"
+                                   placeholder="Szukaj pojazdów..."
+                                   class="w-full pl-10 pr-4 py-3 search-box rounded-lg text-white placeholder-gray-400">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <select id="availabilityFilter" class="search-box rounded-lg px-4 py-3 text-white">
+                            <option value="">Wszystkie</option>
+                            <option value="true">Dostępne</option>
+                            <option value="false">Niedostępne</option>
+                        </select>
+                        <select id="colorFilter" class="search-box rounded-lg px-4 py-3 text-white">
+                            <option value="">Wszystkie kolory</option>
+                            @if (Model != null)
+                            {
+                                @foreach (var color in Model.Select(v => v.Color).Distinct().OrderBy(c => c))
+                                {
+                                    <option value="@color">@color</option>
+                                }
+                            }
+                        </select>
+                        <select id="priceFilter" class="search-box rounded-lg px-4 py-3 text-white">
+                            <option value="">Wszystkie ceny</option>
+                            <option value="0-100">0-100 zł</option>
+                            <option value="100-200">100-200 zł</option>
+                            <option value="200-500">200-500 zł</option>
+                            <option value="500+">500+ zł</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicles Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="vehiclesGrid">
+
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var vehicle in Model)
+                    {
+                        <div class="vehicle-card bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 cursor-pointer" 
+                             onclick="goToVehicleDetails(@vehicle.ID)"
+                             data-model="@vehicle.Model"
+                             data-registration="@vehicle.RegistrationNumber"
+                             data-color="@vehicle.Color"
+                             data-price="@vehicle.DailyRentalPrice"
+                             data-available="@vehicle.IsAvailable.ToString().ToLower()">
+                            <div class="flex flex-col items-center text-center">
+                                <div class="vehicle-placeholder mb-4">
+                                    <i class="fas fa-car"></i>
+                                </div>
+
+                                <h3 class="text-lg font-semibold text-white mb-1">@vehicle.Model</h3>
+                                <p class="text-sm text-gray-400 mb-2">@vehicle.RegistrationNumber</p>
+                                
+                                <span class="status-badge @(vehicle.IsAvailable ? "status-available" : "status-unavailable") mb-3">
+                                    <i class="fas fa-circle text-xs mr-1"></i>
+                                    @(vehicle.IsAvailable ? "Dostępny" : "Niedostępny")
+                                </span>
+
+                                <div class="price-tag mb-3">
+                                    @vehicle.DailyRentalPrice.ToString("C0") / dzień
+                                </div>
+
+                                <div class="w-full text-sm text-gray-300 space-y-2">
+                                    <div class="vehicle-info-item">
+                                        <span class="text-gray-400">Kolor:</span>
+                                        <span class="ml-2">@vehicle.Color</span>
+                                    </div>
+                                    
+                                    <div class="vehicle-info-item">
+                                        <span class="text-gray-400">Rocznik:</span>
+                                        <span class="ml-2">@vehicle.YearOfManufacture.Year</span>
+                                    </div>
+                                    
+                                    <div class="vehicle-info-item">
+                                        <span class="text-gray-400">Przebieg:</span>
+                                        <span class="ml-2">@vehicle.Mileage.ToString("N0") km</span>
+                                    </div>
+                                    
+                                    <div class="vehicle-info-item">
+                                        <span class="text-gray-400">VIN:</span>
+                                        <span class="text-xs text-gray-500 ml-2 truncate">@vehicle.VIN</span>
+                                    </div>
+                                    
+                                    <div class="vehicle-info-item">
+                                        <span class="text-gray-400">Wiek:</span>
+                                        <span class="text-yellow-400 ml-2">@Math.Round((DateTime.Now - vehicle.YearOfManufacture).TotalDays / 365.25, 1) lat</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-span-full flex flex-col items-center justify-center py-12">
+                        <i class="fas fa-car text-6xl text-gray-600 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-400 mb-2">Brak pojazdów</h3>
+                        <p class="text-gray-500 mb-6">Nie znaleziono żadnych pojazdów w systemie.</p>
+                        <a href="@Url.Action("VehicleAdd", "Vehicle")"
+                           class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center">
+                            <i class="fas fa-plus mr-2"></i>
+                            Dodaj pierwszy pojazd
+                        </a>
+                    </div>
+                }
+
+            </div>
+
+            <!-- Pagination -->
+            @if (Model != null && Model.Count() > 12)
+            {
+                <div class="mt-8 flex justify-center">
+                    <nav class="flex items-center space-x-2">
+                        <button class="px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">1</button>
+                        <button class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">2</button>
+                        <button class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">3</button>
+                        <button class="px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </nav>
+                </div>
+            }
+
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const userInfo = document.getElementById('user-info');
+    const navTexts = document.querySelectorAll('.nav-text');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                if (logoText) logoText.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                navTexts.forEach(text => text.style.display = 'none');
+            } else {
+                if (logoText) logoText.style.display = 'block';
+                if (userInfo) userInfo.style.display = 'block';
+                navTexts.forEach(text => text.style.display = 'block');
+            }
+        });
+    }
+
+    // Navigation active state
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active', 'text-blue-400', 'bg-blue-900/30');
+                nav.classList.add('text-gray-300');
+            });
+            item.classList.add('active', 'text-blue-400', 'bg-blue-900/30');
+            item.classList.remove('text-gray-300');
+        });
+    });
+
+    // Search and filter functionality
+    const searchInput = document.getElementById('searchInput');
+    const availabilityFilter = document.getElementById('availabilityFilter');
+    const colorFilter = document.getElementById('colorFilter');
+    const priceFilter = document.getElementById('priceFilter');
+    const vehicleCards = document.querySelectorAll('.vehicle-card');
+
+    function filterVehicles() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        const selectedAvailability = availabilityFilter ? availabilityFilter.value : '';
+        const selectedColor = colorFilter ? colorFilter.value : '';
+        const selectedPriceRange = priceFilter ? priceFilter.value : '';
+
+        vehicleCards.forEach(card => {
+            const model = (card.dataset.model || '').toLowerCase();
+            const registration = (card.dataset.registration || '').toLowerCase();
+            const color = card.dataset.color || '';
+            const price = parseFloat(card.dataset.price) || 0;
+            const available = card.dataset.available || '';
+
+            const matchesSearch = !searchTerm || 
+                model.includes(searchTerm) || 
+                registration.includes(searchTerm);
+            
+            const matchesAvailability = !selectedAvailability || available === selectedAvailability;
+            const matchesColor = !selectedColor || color === selectedColor;
+            
+            let matchesPrice = true;
+            if (selectedPriceRange) {
+                switch (selectedPriceRange) {
+                    case '0-100':
+                        matchesPrice = price >= 0 && price <= 100;
+                        break;
+                    case '100-200':
+                        matchesPrice = price > 100 && price <= 200;
+                        break;
+                    case '200-500':
+                        matchesPrice = price > 200 && price <= 500;
+                        break;
+                    case '500+':
+                        matchesPrice = price > 500;
+                        break;
+                }
+            }
+
+            if (matchesSearch && matchesAvailability && matchesColor && matchesPrice) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Update results counter
+        const visibleCards = Array.from(vehicleCards).filter(card => card.style.display !== 'none');
+        console.log(`Showing ${visibleCards.length} of ${vehicleCards.length} vehicles`);
+    }
+
+    // Event listeners
+    if (searchInput) {
+        searchInput.addEventListener('input', filterVehicles);
+    }
+    
+    if (availabilityFilter) {
+        availabilityFilter.addEventListener('change', filterVehicles);
+    }
+    
+    if (colorFilter) {
+        colorFilter.addEventListener('change', filterVehicles);
+    }
+
+    if (priceFilter) {
+        priceFilter.addEventListener('change', filterVehicles);
+    }
+
+    // Go to vehicle details function
+    function goToVehicleDetails(vehicleId) {
+        if (vehicleId) {
+            window.location.href = `@Url.Action("VehicleDetail", "Vehicle")/${vehicleId}`;
+        }
+    }
+
+    // Make function global for onclick handlers
+    window.goToVehicleDetails = goToVehicleDetails;
+
+    // Add loading states for better UX
+    function showLoading() {
+        const grid = document.getElementById('vehiclesGrid');
+        if (grid) {
+            grid.innerHTML = `
+                <div class="col-span-full flex justify-center items-center py-12">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+                        <p class="text-gray-400">Ładowanie pojazdów...</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // Add keyboard navigation support
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+    });
+
+    // Add tooltips for truncated text
+    document.querySelectorAll('.truncate').forEach(element => {
+        if (element.scrollWidth > element.clientWidth) {
+            element.title = element.textContent;
+        }
+    });
+
+    // Statistics animation on page load
+    function animateStats() {
+        const statNumbers = document.querySelectorAll('.text-2xl.font-semibold.text-white');
+        statNumbers.forEach(stat => {
+            const finalValue = parseInt(stat.textContent) || 0;
+            if (!isNaN(finalValue)) {
+                let currentValue = 0;
+                const increment = Math.ceil(finalValue / 20);
+                const timer = setInterval(() => {
+                    currentValue += increment;
+                    if (currentValue >= finalValue) {
+                        currentValue = finalValue;
+                        clearInterval(timer);
+                    }
+                    stat.textContent = currentValue + (stat.textContent.includes('zł') ? ' zł' : (stat.textContent.includes('lat') ? ' lat' : ''));
+                }, 50);
+            }
+        });
+    }
+
+    // Run animation when page loads
+    window.addEventListener('load', animateStats);
+
+    // Quick actions for vehicle cards
+    document.querySelectorAll('.vehicle-card').forEach(card => {
+        // Add context menu on right click
+        card.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            const vehicleId = card.getAttribute('onclick').match(/\d+/)[0];
+            showContextMenu(e.pageX, e.pageY, vehicleId);
+        });
+
+        // Add double-click to edit
+        card.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            const vehicleId = card.getAttribute('onclick').match(/\d+/)[0];
+            window.location.href = `@Url.Action("Edit", "Vehicle")/${vehicleId}`;
+        });
+    });
+
+    // Context menu functionality
+    function showContextMenu(x, y, vehicleId) {
+        // Remove existing context menu
+        const existingMenu = document.querySelector('.context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        // Create context menu
+        const contextMenu = document.createElement('div');
+        contextMenu.className = 'context-menu fixed bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 py-2';
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+
+        contextMenu.innerHTML = `
+            <button onclick="goToVehicleDetails(${vehicleId})" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 flex items-center">
+                <i class="fas fa-eye mr-2"></i> Zobacz szczegóły
+            </button>
+            <button onclick="editVehicle(${vehicleId})" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 flex items-center">
+                <i class="fas fa-edit mr-2"></i> Edytuj
+            </button>
+            <button onclick="toggleAvailability(${vehicleId})" class="w-full text-left px-4 py-2 text-yellow-400 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-toggle-on mr-2"></i> Zmień dostępność
+            </button>
+            <button onclick="deleteVehicle(${vehicleId})" class="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-trash mr-2"></i> Usuń
+            </button>
+        `;
+
+        document.body.appendChild(contextMenu);
+
+        // Close menu on click outside
+        setTimeout(() => {
+            document.addEventListener('click', function closeMenu() {
+                contextMenu.remove();
+                document.removeEventListener('click', closeMenu);
+            });
+        }, 100);
+    }
+
+    // Helper functions for context menu actions
+    window.editVehicle = function(vehicleId) {
+        window.location.href = `@Url.Action("Edit", "Vehicle")/${vehicleId}`;
+    };
+
+    window.toggleAvailability = function(vehicleId) {
+        if (confirm('Czy na pewno chcesz zmienić dostępność tego pojazdu?')) {
+            fetch(`@Url.Action("ToggleAvailability", "Vehicle")/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Błąd: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Wystąpił błąd podczas zmiany dostępności pojazdu.');
+            });
+        }
+    };
+
+    window.deleteVehicle = function(vehicleId) {
+        if (confirm('Czy na pewno chcesz usunąć ten pojazd?')) {
+            fetch(`@Url.Action("Delete", "Vehicle")/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Błąd: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Wystąpił błąd podczas usuwania pojazdu.');
+            });
+        }
+    };
+
+    // Add keyboard shortcuts info
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.placeholder = 'Szukaj pojazdów... (naciśnij "/" aby skupić)';
+        }
+    });
+
+    // Export functionality
+    window.exportVehicles = function() {
+        const vehicles = Array.from(document.querySelectorAll('.vehicle-card')).map(card => {
+            return {
+                model: card.dataset.model,
+                registration: card.dataset.registration,
+                color: card.dataset.color,
+                price: card.dataset.price,
+                available: card.dataset.available
+            };
+        });
+        
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + "Model,Numer rejestracyjny,Kolor,Cena,Dostępny\n"
+            + vehicles.map(v => `${v.model},${v.registration},${v.color},${v.price},${v.available}`).join("\n");
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "pojazdy.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+</script>
+}

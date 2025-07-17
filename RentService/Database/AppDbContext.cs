@@ -13,6 +13,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
 
     public DbSet<Vehicle> Cars { get; set; }
     public DbSet<Employee> Employees { get; set; }
+    
+    public DbSet<ExploitationPart> ExploitationParts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
