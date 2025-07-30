@@ -643,12 +643,12 @@
     // Add exploitation part function
     function addExploitationPart(vehicleId) {
         // Navigate to add exploitation part page
-        window.location.href = `@Url.Action("Add", "ExploitationPart")?vehicleId=${vehicleId}`;
+        window.location.href = `@Url.Action("ExploitationPartAdd", "Vehicle")?vehicleId=${vehicleId}`;
     }
 
     // Edit exploitation part function
     function editPart(partId) {
-        window.location.href = `@Url.Action("Edit", "ExploitationPart")/${partId}`;
+        window.location.href = `@Url.Action("ExploitationPartEdit", "Vehicle")/${partId}`;
     }
 
     // Delete exploitation part function
@@ -657,7 +657,7 @@
             return;
         }
 
-        fetch(`@Url.Action("Delete", "ExploitationPart")/${partId}`, {
+        fetch(`@Url.Action("DeletePart", "Vehicle")/${partId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

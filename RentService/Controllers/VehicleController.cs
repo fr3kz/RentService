@@ -260,6 +260,216 @@ public class VehicleController : Controller
             _logger.LogError(ex, "Error toggling availability for vehicle ID: {Id}", id);
             return Json(new { success = false, message = "Wystąpił błąd podczas zmiany dostępności pojazdu." });
         }
+        
+    }
+    
+    // GET: Vehicle/ExploitationPartAdd/5
+    [HttpGet]
+    public async Task<IActionResult> ExploitationPartAdd(int vehicleId)
+    {
+        var vehicle = await _context.Cars.FindAsync(vehicleId);
+        if (vehicle == null)
+        {
+            return NotFound();
+        }
+
+        var exploitationPart = new ExploitationPart
+        {
+            VehicleID = vehicleId,
+            Car = vehicle,
+            LastReplacementDate = DateTime.Now,
+            NextReplacementDueDate = DateTime.Now.AddMonths(6)
+        };
+
+        return View(exploitationPart);
+    }
+    
+    // POST: Vehicle/ExploitationPartAdd
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExploitationPartAdd(ExploitationPart model)
+    {
+        try
+        {
+            // Reload vehicle data for display in case of validation errors
+            model.Car = await _context.Cars
+                .FirstOrDefaultAsync(v => v.ID == model.VehicleID);
+
+            if (model.Car == null)
+            {
+                TempData["ErrorMessage"] = "Pojazd nie został znaleziony.";
+                return RedirectToAction("Index");
+            }
+
+            // Check if model is valid
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Clear navigation property before saving to avoid EF issues
+            var exploitationPart = new ExploitationPart
+            {
+                VehicleID = model.VehicleID,
+                PartType = model.PartType,
+                PartName = model.PartName?.Trim(),
+                TotalKm = model.TotalKm,
+                CurrentKm = model.CurrentKm,
+                LastReplacementDate = model.LastReplacementDate,
+                NextReplacementDueDate = model.NextReplacementDueDate,
+                PartCondition = model.PartCondition,
+                Notes = model.Notes?.Trim()
+            };
+        
+            _context.ExploitationParts.Add(exploitationPart);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Część eksploatacyjna '{exploitationPart.PartName}' została pomyślnie dodana.";
+            return RedirectToAction("VehicleDetail", new { id = model.VehicleID });
+        }
+        catch (Exception ex)
+        {
+            // Log the exception here if you have logging configured
+            ModelState.AddModelError("", "Wystąpił błąd podczas zapisywania części. Spróbuj ponownie.");
+            return View(model);
+        }
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> ExploitationPartEdit(int id)
+    {
+        var exploitationPart = await _context.ExploitationParts
+            .FirstOrDefaultAsync(ep => ep.ID == id);
+
+        if (exploitationPart == null)
+        {
+            TempData["ErrorMessage"] = "Część eksploatacyjna nie została znaleziona.";
+            return RedirectToAction("Index");
+        }
+
+        // Jeśli chcesz pobrać dane pojazdu, wykonaj drugie zapytanie:
+        var vehicle = await _context.Cars
+            .FirstOrDefaultAsync(v => v.ID == exploitationPart.VehicleID);
+
+        exploitationPart.Car = vehicle; // Ręcznie przypisz dane pojazdu do ExploitationPart
+
+        return View(exploitationPart);
+    }
+
+    // POST: Vehicle/ExploitationPartEdit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExploitationPartEdit(int id, ExploitationPart model)
+    {
+        if (id != model.ID)
+        {
+            TempData["ErrorMessage"] = "Nieprawidłowe dane części.";
+            return RedirectToAction("Index");
+        }
+
+        try
+        {
+            // Remove Car validation errors since it's just for display
+            ModelState.Remove("Car");
+
+            // Reload vehicle data for display in case of validation errors
+            model.Car = await _context.Cars
+                .FirstOrDefaultAsync(v => v.ID == model.VehicleID);
+
+            if (model.Car == null)
+            {
+                TempData["ErrorMessage"] = "Pojazd nie został znaleziony.";
+                return RedirectToAction("Index");
+            }
+
+            // Check if model is valid
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Get the existing entity from database
+            var existingPart = await _context.ExploitationParts
+                .FirstOrDefaultAsync(ep => ep.ID == id);
+
+            if (existingPart == null)
+            {
+                TempData["ErrorMessage"] = "Część eksploatacyjna nie została znaleziona.";
+                return RedirectToAction("Index");
+            }
+
+            // Update only the properties we want to change
+            existingPart.PartType = model.PartType;
+            existingPart.PartName = model.PartName?.Trim();
+            existingPart.TotalKm = model.TotalKm;
+            existingPart.CurrentKm = model.CurrentKm;
+            existingPart.LastReplacementDate = model.LastReplacementDate;
+            existingPart.NextReplacementDueDate = model.NextReplacementDueDate;
+            existingPart.PartCondition = model.PartCondition;
+            existingPart.Notes = model.Notes?.Trim();
+
+            _context.Update(existingPart);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Część eksploatacyjna '{existingPart.PartName}' została pomyślnie zaktualizowana.";
+            return RedirectToAction("VehicleDetail", new { id = model.VehicleID });
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ExploitationPartExists(model.ID))
+            {
+                TempData["ErrorMessage"] = "Część eksploatacyjna nie została znaleziona.";
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                ModelState.AddModelError("", "Część została zmodyfikowana przez innego użytkownika. Odśwież stronę i spróbuj ponownie.");
+                return View(model);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the exception here if you have logging configured
+            ModelState.AddModelError("", "Wystąpił błąd podczas aktualizacji części. Spróbuj ponownie.");
+            return View(model);
+        }
+    }
+
+    // Helper method to check if ExploitationPart exists
+    private bool ExploitationPartExists(int id)
+    {
+        return _context.ExploitationParts.Any(e => e.ID == id);
+    }
+
+    // DELETE: Vehicle/ExploitationPartDelete/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExploitationPartDelete(int id, int vehicleId)
+    {
+        try
+        {
+            var exploitationPart = await _context.ExploitationParts
+                .FirstOrDefaultAsync(ep => ep.ID == id);
+
+            if (exploitationPart == null)
+            {
+                TempData["ErrorMessage"] = "Część eksploatacyjna nie została znaleziona.";
+            }
+            else
+            {
+                _context.ExploitationParts.Remove(exploitationPart);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Część eksploatacyjna '{exploitationPart.PartName}' została pomyślnie usunięta.";
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the exception here if you have logging configured
+            TempData["ErrorMessage"] = "Wystąpił błąd podczas usuwania części. Spróbuj ponownie.";
+        }
+
+        return RedirectToAction("VehicleDetail", new { id = vehicleId });
     }
 
     // GET: Vehicle/Search

@@ -6,7 +6,7 @@ public class Vehicle
    {
       ExploitationParts = new List<ExploitationPart>();
    }
-   public int ID { get;  private set; }
+   public int ID { get;  set; }
    public string Model { get; set; }
    public string RegistrationNumber { get; set; }
    public DateTime YearOfManufacture { get; set; }
