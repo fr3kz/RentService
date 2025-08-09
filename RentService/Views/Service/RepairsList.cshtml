@@ -1,0 +1,666 @@
+@{
+ViewData["Title"] = "Naprawy";
+Layout = "_Layout";
+}
+
+@model IEnumerable<RentService.Models.Repair>
+
+@section Head {
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .repair-card {
+        transition: all 0.3s ease;
+    }
+
+    .repair-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-completed {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: rgb(16, 185, 129);
+    }
+
+    .status-inprogress {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: rgb(59, 130, 246);
+    }
+
+    .status-scheduled {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: rgb(245, 158, 11);
+    }
+
+    .status-cancelled {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: rgb(239, 68, 68);
+    }
+
+    .status-waitingforparts {
+        background-color: rgba(168, 85, 247, 0.2);
+        color: rgb(168, 85, 247);
+    }
+
+    .status-waitingforpayment {
+        background-color: rgba(236, 72, 153, 0.2);
+        color: rgb(236, 72, 153);
+    }
+
+    .search-box {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        transition: border-color 0.3s ease;
+    }
+
+    .search-box:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+
+    .repair-info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.25rem 0;
+        font-size: 0.875rem;
+    }
+
+    .repair-info-item:not(:last-child) {
+        border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+    }
+
+    .repair-placeholder {
+        width: 5rem;
+        height: 5rem;
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .cost-tag {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .type-tag {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <h1 class="ml-4 text-2xl font-semibold text-white">Naprawy</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="@Url.Action("RepairAdd", "Service")"
+                       class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Dodaj naprawę
+                    </a>
+                    <button class="text-gray-400 hover:text-white relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">2</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-red-600/20 text-red-400">
+                            <i class="fas fa-wrench text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-400">Wszystkie naprawy</p>
+                            <p class="text-2xl font-semibold text-white">@(Model?.Count() ?? 0)</p>
+                            <p class="text-sm text-gray-400">w systemie</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-600/20 text-green-400">
+                            <i class="fas fa-check-circle text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-400">Zakończone</p>
+                            <p class="text-2xl font-semibold text-white">
+                                @(Model?.Count(r => r.Status == RentService.Models.RepairStatus.Completed) ?? 0)
+                            </p>
+                            <p class="text-sm text-blue-400">naprawy</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-600/20 text-yellow-400">
+                            <i class="fas fa-clock text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-400">W trakcie</p>
+                            <p class="text-2xl font-semibold text-white">
+                                @(Model?.Count(r => r.Status == RentService.Models.RepairStatus.InProgress) ?? 0)
+                            </p>
+                            <p class="text-sm text-orange-400">naprawy</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-600/20 text-purple-400">
+                            <i class="fas fa-dollar-sign text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-400">Łączny koszt</p>
+                            <p class="text-2xl font-semibold text-white">
+                                @if (Model != null && Model.Any())
+                                {
+                                @(Model.Sum(r => r.Cost).ToString("C0"))
+                                }
+                                else
+                                {
+                                <text>0 zł</text>
+                                }
+                            </p>
+                            <p class="text-sm text-gray-400">wszystkich napraw</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex-1 max-w-md">
+                        <div class="relative">
+                            <input type="text"
+                                   id="searchInput"
+                                   placeholder="Szukaj napraw..."
+                                   class="w-full pl-10 pr-4 py-3 search-box rounded-lg text-white placeholder-gray-400">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <select id="statusFilter" class="search-box rounded-lg px-4 py-3 text-white">
+                            <option value="">Wszystkie statusy</option>
+                            <option value="Scheduled">Zaplanowana</option>
+                            <option value="InProgress">W trakcie</option>
+                            <option value="Completed">Zakończona</option>
+                            <option value="Cancelled">Anulowana</option>
+                            <option value="WaitingForParts">Oczekuje na części</option>
+                            <option value="WaitingForPayment">Oczekuje na płatność</option>
+                        </select>
+                        <select id="typeFilter" class="search-box rounded-lg px-4 py-3 text-white">
+                            <option value="">Wszystkie typy</option>
+                            @if (Model != null)
+                            {
+                            @foreach (var type in Model.Select(r => r.RepairType).Distinct().OrderBy(t => t))
+                            {
+                            <option value="@type">@type.ToString()</option>
+                            }
+                            }
+                        </select>
+                        <select id="costFilter" class="search-box rounded-lg px-4 py-3 text-white">
+                            <option value="">Wszystkie koszty</option>
+                            <option value="0-500">0-500 zł</option>
+                            <option value="500-1000">500-1000 zł</option>
+                            <option value="1000-2000">1000-2000 zł</option>
+                            <option value="2000+">2000+ zł</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Repairs Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="repairsGrid">
+
+                @if (Model != null && Model.Any())
+                {
+                @foreach (var repair in Model)
+                {
+                var statusClass = repair.Status switch
+                {
+                RentService.Models.RepairStatus.Completed => "status-completed",
+                RentService.Models.RepairStatus.InProgress => "status-inprogress",
+                RentService.Models.RepairStatus.Scheduled => "status-scheduled",
+                RentService.Models.RepairStatus.Cancelled => "status-cancelled",
+                RentService.Models.RepairStatus.WaitingForParts => "status-waitingforparts",
+                RentService.Models.RepairStatus.WaitingForPayment => "status-waitingforpayment",
+                _ => "status-scheduled"
+                };
+
+                var statusText = repair.Status switch
+                {
+                RentService.Models.RepairStatus.Completed => "Zakończona",
+                RentService.Models.RepairStatus.InProgress => "W trakcie",
+                RentService.Models.RepairStatus.Scheduled => "Zaplanowana",
+                RentService.Models.RepairStatus.Cancelled => "Anulowana",
+                RentService.Models.RepairStatus.WaitingForParts => "Oczekuje na części",
+                RentService.Models.RepairStatus.WaitingForPayment => "Oczekuje na płatność",
+                _ => "Nieznany"
+                };
+
+                <div class="repair-card bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 cursor-pointer"
+                     onclick="goToRepairDetails(@repair.ID)"
+                     data-vehicle="@repair.Vehicle.Model @repair.Vehicle.RegistrationNumber"
+                     data-type="@repair.RepairType"
+                     data-cost="@repair.Cost"
+                     data-status="@repair.Status">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="repair-placeholder mb-4">
+                            <i class="fas fa-wrench"></i>
+                        </div>
+
+                        <h3 class="text-lg font-semibold text-white mb-1">@repair.Vehicle.Model</h3>
+                        <p class="text-sm text-gray-400 mb-2">@repair.Vehicle.RegistrationNumber</p>
+
+                        <span class="status-badge @statusClass mb-3">
+                                    <i class="fas fa-circle text-xs mr-1"></i>
+                            @statusText
+                                </span>
+
+                        <div class="type-tag mb-2">
+                            @repair.RepairType.ToString()
+                        </div>
+
+                        <div class="cost-tag mb-3">
+                            @repair.Cost.ToString("C0")
+                        </div>
+
+                        <div class="w-full text-sm text-gray-300 space-y-2">
+                            <div class="repair-info-item">
+                                <span class="text-gray-400">Data naprawy:</span>
+                                <span class="ml-2">@repair.RepairDate.ToString("dd.MM.yyyy")</span>
+                            </div>
+
+                            @if (repair.CompletionDate.HasValue)
+                            {
+                            <div class="repair-info-item">
+                                <span class="text-gray-400">Zakończono:</span>
+                                <span class="ml-2 text-green-400">@repair.CompletionDate.Value.ToString("dd.MM.yyyy")</span>
+                            </div>
+                            }
+
+                            <div class="repair-info-item">
+                                <span class="text-gray-400">Części:</span>
+                                <span class="ml-2 @(repair.RepairParts.Any() ? "text-blue-400" : "text-gray-500")">
+                                            @(repair.RepairParts.Any() ? repair.RepairParts.Count.ToString() : "Brak")
+                                        </span>
+                            </div>
+
+                            <div class="repair-info-item">
+                                <span class="text-gray-400">Przebieg:</span>
+                                <span class="text-yellow-400 ml-2">@repair.MileageAtRepair.ToString("N0") km</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                }
+                }
+                else
+                {
+                <div class="col-span-full flex flex-col items-center justify-center py-12">
+                    <i class="fas fa-wrench text-6xl text-gray-600 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-400 mb-2">Brak napraw</h3>
+                    <p class="text-gray-500 mb-6">Nie znaleziono żadnych napraw w systemie.</p>
+                    <a href="@Url.Action("RepairAdd", "Service")"
+                       class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-flex items-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Dodaj pierwszą naprawę
+                    </a>
+                </div>
+                }
+
+            </div>
+
+            <!-- Pagination -->
+            @if (Model != null && Model.Count() > 12)
+            {
+            <div class="mt-8 flex justify-center">
+                <nav class="flex items-center space-x-2">
+                    <button class="px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium">1</button>
+                    <button class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">2</button>
+                    <button class="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">3</button>
+                    <button class="px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </nav>
+            </div>
+            }
+
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const userInfo = document.getElementById('user-info');
+    const navTexts = document.querySelectorAll('.nav-text');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                if (logoText) logoText.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                navTexts.forEach(text => text.style.display = 'none');
+            } else {
+                if (logoText) logoText.style.display = 'block';
+                if (userInfo) userInfo.style.display = 'block';
+                navTexts.forEach(text => text.style.display = 'block');
+            }
+        });
+    }
+
+    // Navigation active state
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active', 'text-red-400', 'bg-red-900/30');
+                nav.classList.add('text-gray-300');
+            });
+            item.classList.add('active', 'text-red-400', 'bg-red-900/30');
+            item.classList.remove('text-gray-300');
+        });
+    });
+
+    // Search and filter functionality
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const costFilter = document.getElementById('costFilter');
+    const repairCards = document.querySelectorAll('.repair-card');
+
+    function filterRepairs() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        const selectedStatus = statusFilter ? statusFilter.value : '';
+        const selectedType = typeFilter ? typeFilter.value : '';
+        const selectedCostRange = costFilter ? costFilter.value : '';
+
+        repairCards.forEach(card => {
+            const vehicle = (card.dataset.vehicle || '').toLowerCase();
+            const type = card.dataset.type || '';
+            const cost = parseFloat(card.dataset.cost) || 0;
+            const status = card.dataset.status || '';
+
+            const matchesSearch = !searchTerm ||
+                vehicle.includes(searchTerm) ||
+                type.toLowerCase().includes(searchTerm);
+
+            const matchesStatus = !selectedStatus || status === selectedStatus;
+            const matchesType = !selectedType || type === selectedType;
+
+            let matchesCost = true;
+            if (selectedCostRange) {
+                switch (selectedCostRange) {
+                    case '0-500':
+                        matchesCost = cost >= 0 && cost <= 500;
+                        break;
+                    case '500-1000':
+                        matchesCost = cost > 500 && cost <= 1000;
+                        break;
+                    case '1000-2000':
+                        matchesCost = cost > 1000 && cost <= 2000;
+                        break;
+                    case '2000+':
+                        matchesCost = cost > 2000;
+                        break;
+                }
+            }
+
+            if (matchesSearch && matchesStatus && matchesType && matchesCost) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Update results counter
+        const visibleCards = Array.from(repairCards).filter(card => card.style.display !== 'none');
+        console.log(`Showing ${visibleCards.length} of ${repairCards.length} repairs`);
+    }
+
+    // Event listeners
+    if (searchInput) {
+        searchInput.addEventListener('input', filterRepairs);
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterRepairs);
+    }
+
+    if (typeFilter) {
+        typeFilter.addEventListener('change', filterRepairs);
+    }
+
+    if (costFilter) {
+        costFilter.addEventListener('change', filterRepairs);
+    }
+
+    // Go to repair details function
+    function goToRepairDetails(repairId) {
+        if (repairId) {
+            window.location.href = `@Url.Action("RepairDetails", "Service")/${repairId}`;
+        }
+    }
+
+    // Make function global for onclick handlers
+    window.goToRepairDetails = goToRepairDetails;
+
+    // Statistics animation on page load
+    function animateStats() {
+        const statNumbers = document.querySelectorAll('.text-2xl.font-semibold.text-white');
+        statNumbers.forEach(stat => {
+            const text = stat.textContent.trim();
+            const finalValue = parseInt(text.replace(/[^\d]/g, '')) || 0;
+            if (!isNaN(finalValue) && finalValue > 0) {
+                let currentValue = 0;
+                const increment = Math.ceil(finalValue / 20);
+                const timer = setInterval(() => {
+                    currentValue += increment;
+                    if (currentValue >= finalValue) {
+                        currentValue = finalValue;
+                        clearInterval(timer);
+                    }
+                    if (text.includes('zł')) {
+                        stat.textContent = currentValue.toLocaleString() + ' zł';
+                    } else {
+                        stat.textContent = currentValue;
+                    }
+                }, 50);
+            }
+        });
+    }
+
+    // Run animation when page loads
+    window.addEventListener('load', animateStats);
+
+    // Quick actions for repair cards
+    document.querySelectorAll('.repair-card').forEach(card => {
+        // Add context menu on right click
+        card.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            const repairId = card.getAttribute('onclick').match(/\d+/)[0];
+            showContextMenu(e.pageX, e.pageY, repairId);
+        });
+
+        // Add double-click to edit
+        card.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            const repairId = card.getAttribute('onclick').match(/\d+/)[0];
+            window.location.href = `@Url.Action("RepairEdit", "Service")/${repairId}`;
+        });
+    });
+
+    // Context menu functionality
+    function showContextMenu(x, y, repairId) {
+        // Remove existing context menu
+        const existingMenu = document.querySelector('.context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        // Create context menu
+        const contextMenu = document.createElement('div');
+        contextMenu.className = 'context-menu fixed bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 py-2';
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+
+        contextMenu.innerHTML = `
+            <button onclick="goToRepairDetails(${repairId})" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 flex items-center">
+                <i class="fas fa-eye mr-2"></i> Zobacz szczegóły
+            </button>
+            <button onclick="editRepair(${repairId})" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 flex items-center">
+                <i class="fas fa-edit mr-2"></i> Edytuj
+            </button>
+            <button onclick="manageRepairParts(${repairId})" class="w-full text-left px-4 py-2 text-green-400 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-cogs mr-2"></i> Zarządzaj częściami
+            </button>
+            <button onclick="deleteRepair(${repairId})" class="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-trash mr-2"></i> Usuń
+            </button>
+        `;
+
+        document.body.appendChild(contextMenu);
+
+        // Close menu on click outside
+        setTimeout(() => {
+            document.addEventListener('click', function closeMenu() {
+                contextMenu.remove();
+                document.removeEventListener('click', closeMenu);
+            });
+        }, 100);
+    }
+
+    // Helper functions for context menu actions
+    window.editRepair = function(repairId) {
+        window.location.href = `@Url.Action("RepairEdit", "Service")/${repairId}`;
+    };
+
+    window.manageRepairParts = function(repairId) {
+        window.location.href = `@Url.Action("ManageRepairParts", "Service")/${repairId}`;
+    };
+
+    window.deleteRepair = function(repairId) {
+        if (confirm('Czy na pewno chcesz usunąć tę naprawę?')) {
+            fetch(`@Url.Action("RepairDelete", "Service")/${repairId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Błąd: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd podczas usuwania naprawy.');
+                });
+        }
+    };
+
+    // Add keyboard navigation support
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+    });
+
+    // Add keyboard shortcuts info
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.placeholder = 'Szukaj napraw... (naciśnij "/" aby skupić)';
+        }
+    });
+
+    // Export functionality
+    window.exportRepairs = function() {
+        const repairs = Array.from(document.querySelectorAll('.repair-card')).map(card => {
+            return {
+                vehicle: card.dataset.vehicle,
+                type: card.dataset.type,
+                cost: card.dataset.cost,
+                status: card.dataset.status
+            };
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + "Pojazd,Typ naprawy,Koszt,Status\n"
+            + repairs.map(r => `${r.vehicle},${r.type},${r.cost},${r.status}`).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "naprawy.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+</script>
+}

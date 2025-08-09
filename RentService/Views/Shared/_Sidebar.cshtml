@@ -36,18 +36,14 @@
 
         <!-- Pojazdy -->
         <a href="@Url.Action("VehicleList", "Vehicle")" class="flex items-center hover:opacity-80 transition-opacity px-4 py-3 rounded-lg transition-colors ">
-            <i class="fas fa-users w-5"></i>
+            <i class="fas fa-car w-5"></i>
             <span class="nav-text ml-3">Pojazdy</span>
         </a>
 
-        <!-- Rezerwacje -->
-        <a href="@Url.Action("Logout", "Users")" 
-           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors
-                  @(currentController.Equals("Reservations", StringComparison.OrdinalIgnoreCase) ? 
-                    "text-blue-400 bg-blue-900/30" : 
-                    "text-gray-300 hover:text-blue-400 hover:bg-gray-700")">
-            <i class="fas fa-calendar-alt w-5"></i>
-            <span class="nav-text ml-3">Rezerwacje</span>
+        <!-- Serwis -->
+        <a href="@Url.Action("ServiceList", "Service")" class="flex items-center hover:opacity-80 transition-opacity px-4 py-3 rounded-lg transition-colors ">
+            <i class="fas fa-users w-5"></i>
+            <span class="nav-text ml-3">Serwis</span>
         </a>
 
         <!-- Analityka -->

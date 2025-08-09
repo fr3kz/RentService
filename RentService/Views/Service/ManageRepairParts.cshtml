@@ -1,0 +1,977 @@
+@{
+ViewData["Title"] = "Zarządzanie częściami naprawy";
+Layout = "_Layout";
+}
+
+@model RentService.Models.Repair
+
+@section Head {
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .detail-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .part-card {
+        background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+        border: 1px solid #4b5563;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .part-card:hover {
+        transform: translateY(-2px);
+        border-color: #6b7280;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .add-part-form {
+        background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        border: 1px solid #059669;
+    }
+
+    .form-input {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 0.5rem;
+        color: white;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+        border-color: #3b82f6;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-select {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 0.5rem;
+        color: white;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-select:focus {
+        border-color: #3b82f6;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .action-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .action-replaced {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: rgb(239, 68, 68);
+    }
+
+    .action-repaired {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: rgb(245, 158, 11);
+    }
+
+    .action-inspected {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: rgb(59, 130, 246);
+    }
+
+    .action-cleaned {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: rgb(16, 185, 129);
+    }
+
+    .action-sealed {
+        background-color: rgba(168, 85, 247, 0.2);
+        color: rgb(168, 85, 247);
+    }
+
+    .action-adjusted {
+        background-color: rgba(236, 72, 153, 0.2);
+        color: rgb(236, 72, 153);
+    }
+
+    .condition-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .condition-new {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: rgb(16, 185, 129);
+    }
+
+    .condition-good {
+        background-color: rgba(34, 197, 94, 0.2);
+        color: rgb(34, 197, 94);
+    }
+
+    .condition-worn {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: rgb(245, 158, 11);
+    }
+
+    .condition-damaged {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: rgb(239, 68, 68);
+    }
+
+    .condition-replaced {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: rgb(59, 130, 246);
+    }
+
+    .part-type-badge {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .remove-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: rgba(239, 68, 68, 0.2);
+        color: rgb(239, 68, 68);
+        border: none;
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        opacity: 0;
+    }
+
+    .part-card:hover .remove-btn {
+        opacity: 1;
+    }
+
+    .remove-btn:hover {
+        background: rgba(239, 68, 68, 0.3);
+        transform: scale(1.1);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+        border: 1px solid #4b5563;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #9ca3af;
+    }
+
+    .progress-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, #3b82f6 0%, #3b82f6 var(0, 0%), #374151 var(0, 0%));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        position: relative;
+    }
+
+    .progress-circle::before {
+        content: '';
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #1f2937;
+        position: absolute;
+    }
+
+    .progress-text {
+        position: relative;
+        z-index: 1;
+        color: white;
+        font-weight: bold;
+        font-size: 0.875rem;
+    }
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-semibold text-white">Zarządzanie częściami</h1>
+                        <p class="text-sm text-gray-400">@Model.Vehicle.Model - @Model.Vehicle.RegistrationNumber - @Model.RepairType</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="@Url.Action("RepairDetails", "Service", new { id = Model.ID })"
+                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Powrót do naprawy
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="progress-circle" style="--progress: @(Model.RepairParts.Count * 20)%">
+                        <span class="progress-text">@Model.RepairParts.Count</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-400">Części w naprawie</h3>
+                </div>
+
+                <div class="stat-card">
+                    <div class="progress-circle" style="--progress: @(Model.RepairParts.Count(rp => rp.Action == RentService.Models.PartAction.Replaced) * 25)%">
+                        <span class="progress-text">@Model.RepairParts.Count(rp => rp.Action == RentService.Models.PartAction.Replaced)</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-400">Wymienione</h3>
+                </div>
+
+                <div class="stat-card">
+                    <div class="progress-circle" style="--progress: @(Model.RepairParts.Count(rp => rp.Action == RentService.Models.PartAction.Repaired) * 30)%">
+                        <span class="progress-text">@Model.RepairParts.Count(rp => rp.Action == RentService.Models.PartAction.Repaired)</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-400">Naprawione</h3>
+                </div>
+
+                <div class="stat-card">
+                    <div class="progress-circle" style="--progress: @(Model.RepairParts.Count(rp => rp.Action == RentService.Models.PartAction.Inspected) * 40)%">
+                        <span class="progress-text">@Model.RepairParts.Count(rp => rp.Action == RentService.Models.PartAction.Inspected)</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-400">Sprawdzone</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Left Column - Parts List -->
+                <div class="lg:col-span-2">
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-white flex items-center">
+                                <i class="fas fa-cogs mr-3 text-blue-400"></i>
+                                Części w naprawie (@Model.RepairParts.Count)
+                            </h2>
+                            <div class="flex items-center space-x-2 text-sm text-gray-400">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Najedź na kartę aby zobaczyć opcje usuwania</span>
+                            </div>
+                        </div>
+
+                        @if (Model.RepairParts.Any())
+                        {
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var repairPart in Model.RepairParts)
+                            {
+                            var actionClass = repairPart.Action switch
+                            {
+                            RentService.Models.PartAction.Replaced => "action-replaced",
+                            RentService.Models.PartAction.Repaired => "action-repaired",
+                            RentService.Models.PartAction.Inspected => "action-inspected",
+                            RentService.Models.PartAction.Cleaned => "action-cleaned",
+                            RentService.Models.PartAction.Sealed => "action-sealed",
+                            RentService.Models.PartAction.Adjusted => "action-adjusted",
+                            _ => "action-inspected"
+                            };
+
+                            var conditionClass = repairPart.ExploitationPart.PartCondition switch
+                            {
+                            RentService.Models.VehicleModule.Condition.New => "condition-new",
+                            RentService.Models.VehicleModule.Condition.Good => "condition-good",
+                            RentService.Models.VehicleModule.Condition.Worn => "condition-worn",
+                            RentService.Models.VehicleModule.Condition.Damaged => "condition-damaged",
+                            RentService.Models.VehicleModule.Condition.Replaced => "condition-replaced",
+                            _ => "condition-good"
+                            };
+
+                            <div class="part-card" data-part-id="@repairPart.ExploitationPartID">
+                                <button class="remove-btn" onclick="removePartFromRepair(@Model.ID, @repairPart.ExploitationPartID)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+
+                                <div class="flex items-start justify-between mb-3">
+                                    <h3 class="font-semibold text-white text-lg">@repairPart.ExploitationPart.PartName</h3>
+                                    <span class="part-type-badge">@repairPart.ExploitationPart.PartType</span>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-400">Akcja:</span>
+                                        <span class="action-badge @actionClass">
+                                                    <i class="fas fa-circle text-xs mr-1"></i>
+                                            @repairPart.Action
+                                                </span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-400">Stan części:</span>
+                                        <span class="condition-badge @conditionClass">
+                                                    @repairPart.ExploitationPart.PartCondition
+                                                </span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-400">Przebieg całkowity:</span>
+                                        <span class="text-white font-medium">@repairPart.ExploitationPart.TotalKm.ToString("N0") km</span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-400">Przebieg aktualny:</span>
+                                        <span class="text-yellow-400 font-medium">@repairPart.ExploitationPart.CurrentKm.ToString("N0") km</span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-400">Ostatnia wymiana:</span>
+                                        <span class="text-gray-300">@repairPart.ExploitationPart.LastReplacementDate.ToString("dd.MM.yyyy")</span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-400">Planowana wymiana:</span>
+                                        <span class="text-orange-400">@repairPart.ExploitationPart.NextReplacementDueDate.ToString("dd.MM.yyyy")</span>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(repairPart.PartNotes))
+                                    {
+                                    <div class="pt-3 border-t border-gray-600">
+                                        <span class="text-gray-400 text-sm block mb-1">Uwagi:</span>
+                                        <p class="text-gray-300 text-sm bg-gray-800 p-2 rounded">@repairPart.PartNotes</p>
+                                    </div>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(repairPart.ExploitationPart.Notes))
+                                    {
+                                    <div class="pt-2">
+                                        <span class="text-gray-400 text-sm block mb-1">Uwagi o części:</span>
+                                        <p class="text-gray-300 text-sm">@repairPart.ExploitationPart.Notes</p>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        }
+                        else
+                        {
+                        <div class="empty-state">
+                            <i class="fas fa-cogs text-6xl mb-4"></i>
+                            <h3 class="text-xl font-medium mb-2">Brak części w naprawie</h3>
+                            <p class="mb-6">Ta naprawa nie ma jeszcze przypisanych części eksploatacyjnych.</p>
+                            <p class="text-sm">Użyj formularza po prawej stronie aby dodać części.</p>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Right Column - Add Part Form -->
+                <div class="space-y-6">
+                    <!-- Add Part Form -->
+                    <div class="add-part-form">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                            <i class="fas fa-plus mr-3"></i>
+                            Dodaj część do naprawy
+                        </h2>
+
+                        <form asp-action="AddPartToRepair" asp-controller="Service" method="post">
+                            <input type="hidden" name="repairId" value="@Model.ID" />
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">
+                                        <i class="fas fa-cog mr-2"></i>
+                                        Wybierz część
+                                    </label>
+                                    <select name="exploitationPartId" class="form-select w-full px-3 py-2" required>
+                                        <option value="">-- Wybierz część --</option>
+                                        @foreach (var part in ViewBag.AvailableParts as SelectList)
+                                        {
+                                        <option value="@part.Value">@part.Text</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">
+                                        <i class="fas fa-tools mr-2"></i>
+                                        Akcja wykonana
+                                    </label>
+                                    <select name="action" class="form-select w-full px-3 py-2" required>
+                                        <option value="">-- Wybierz akcję --</option>
+                                        @foreach (var action in ViewBag.PartActions as SelectList)
+                                        {
+                                        <option value="@action.Value">@action.Text</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">
+                                        <i class="fas fa-sticky-note mr-2"></i>
+                                        Uwagi o wykonanej akcji
+                                    </label>
+                                    <textarea name="partNotes"
+                                              class="form-input w-full px-3 py-2 resize-none"
+                                              rows="3"
+                                              placeholder="Opcjonalne uwagi dotyczące wykonanej akcji..."></textarea>
+                                </div>
+
+                                <button type="submit"
+                                        class="w-full bg-white text-green-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Dodaj część do naprawy
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Available Parts Info -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-info-circle mr-3 text-blue-400"></i>
+                            Dostępne części
+                        </h3>
+
+                        @{
+                        var availableParts = ViewBag.AvailableParts as SelectList;
+                        var totalParts = availableParts?.Count() ?? 0;
+                        var usedParts = Model.RepairParts.Count;
+                        var remainingParts = totalParts - usedParts;
+                        }
+
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Wszystkie części pojazdu:</span>
+                                <span class="text-white font-medium">@totalParts</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Użyte w naprawie:</span>
+                                <span class="text-blue-400 font-medium">@usedParts</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Dostępne do dodania:</span>
+                                <span class="text-green-400 font-medium">@remainingParts</span>
+                            </div>
+                        </div>
+
+                        @if (remainingParts == 0)
+                        {
+                        <div class="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+                            <p class="text-yellow-300 text-sm">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Wszystkie części tego pojazdu są już przypisane do tej naprawy.
+                            </p>
+                        </div>
+                        }
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-lightning-bolt mr-3 text-yellow-400"></i>
+                            Szybkie akcje
+                        </h3>
+
+                        <div class="space-y-3">
+                            <button onclick="markAllAsInspected()"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-search mr-2"></i>
+                                Wszystkie jako sprawdzone
+                            </button>
+
+                            <button onclick="exportPartsList()"
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-download mr-2"></i>
+                                Eksportuj listę części
+                            </button>
+
+                            <button onclick="removeAllParts()"
+                                    class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-trash mr-2"></i>
+                                Usuń wszystkie części
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const userInfo = document.getElementById('user-info');
+    const navTexts = document.querySelectorAll('.nav-text');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                if (logoText) logoText.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                navTexts.forEach(text => text.style.display = 'none');
+            } else {
+                if (logoText) logoText.style.display = 'block';
+                if (userInfo) userInfo.style.display = 'block';
+                navTexts.forEach(text => text.style.display = 'block');
+            }
+        });
+    }
+
+    // Remove part from repair
+    window.removePartFromRepair = function(repairId, exploitationPartId) {
+        if (confirm('Czy na pewno chcesz usunąć tę część z naprawy?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '@Url.Action("RemovePartFromRepair", "Service")';
+
+            const repairInput = document.createElement('input');
+            repairInput.type = 'hidden';
+            repairInput.name = 'repairId';
+            repairInput.value = repairId;
+
+            const partInput = document.createElement('input');
+            partInput.type = 'hidden';
+            partInput.name = 'exploitationPartId';
+            partInput.value = exploitationPartId;
+
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '__RequestVerificationToken';
+            tokenInput.value = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+            form.appendChild(repairInput);
+            form.appendChild(partInput);
+            form.appendChild(tokenInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    };
+
+    // Mark all parts as inspected
+    window.markAllAsInspected = function() {
+        if (confirm('Czy na pewno chcesz oznaczyć wszystkie dostępne części jako sprawdzone?')) {
+            alert('Funkcja w przygotowaniu...');
+        }
+    };
+
+    // Export parts list
+    window.exportPartsList = function() {
+        const parts = Array.from(document.querySelectorAll('.part-card')).map(card => {
+            const name = card.querySelector('h3').textContent.trim();
+            const action = card.querySelector('.action-badge').textContent.trim();
+            const condition = card.querySelector('.condition-badge').textContent.trim();
+            return { name, action, condition };
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + "Nazwa części,Akcja,Stan\n"
+            + parts.map(p => `${p.name},${p.action},${p.condition}`).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "czesci_naprawy.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Remove all parts
+    window.removeAllParts = function() {
+        if (confirm('Czy na pewno chcesz usunąć wszystkie części z tej naprawy? Ta operacja jest nieodwracalna!')) {
+            const partCards = document.querySelectorAll('.part-card');
+            let count = 0;
+
+            partCards.forEach(card => {
+                const partId = card.dataset.partId;
+                setTimeout(() => {
+                    removePartFromRepair(@Model.ID, partId);
+                }, count * 100);
+                count++;
+            });
+        }
+    };
+
+    // Add loading states
+    document.querySelector('form').addEventListener('submit', function() {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Dodawanie...';
+        submitBtn.disabled = true;
+    });
+
+    // Animate progress circles on load
+    window.addEventListener('load', function() {
+        const circles = document.querySelectorAll('.progress-circle');
+        circles.forEach(circle => {
+            const progress = circle.style.getPropertyValue('--progress');
+            circle.style.setProperty('--progress', '0%');
+            setTimeout(() => {
+                circle.style.transition = '--progress 1s ease';
+                circle.style.setProperty('--progress', progress);
+            }, 500);
+        });
+
+        // Animate cards
+        const cards = document.querySelectorAll('.part-card, .detail-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+
+    // Enhanced form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const partSelect = this.querySelector('select[name="exploitationPartId"]');
+        const actionSelect = this.querySelector('select[name="action"]');
+
+        if (!partSelect.value) {
+            e.preventDefault();
+            alert('Proszę wybrać część do dodania.');
+            partSelect.focus();
+            return;
+        }
+
+        if (!actionSelect.value) {
+            e.preventDefault();
+            alert('Proszę wybrać akcję wykonaną na części.');
+            actionSelect.focus();
+            return;
+        }
+
+        // Check if part is already in repair
+        const partCards = document.querySelectorAll('.part-card');
+        const selectedPartId = partSelect.value;
+        let partExists = false;
+
+        partCards.forEach(card => {
+            if (card.dataset.partId === selectedPartId) {
+                partExists = true;
+            }
+        });
+
+        if (partExists) {
+            e.preventDefault();
+            alert('Ta część jest już dodana do naprawy.');
+            return;
+        }
+    });
+
+    // Auto-save notes functionality
+    let notesTimeout;
+    document.querySelector('textarea[name="partNotes"]').addEventListener('input', function() {
+        clearTimeout(notesTimeout);
+        const notes = this.value;
+
+        // Show saving indicator
+        if (!document.querySelector('.saving-indicator')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'saving-indicator text-yellow-400 text-xs mt-1';
+            indicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Zapisywanie...';
+            this.parentNode.appendChild(indicator);
+        }
+
+        notesTimeout = setTimeout(() => {
+            // Remove saving indicator
+            const indicator = document.querySelector('.saving-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+
+            // Show saved indicator
+            const savedIndicator = document.createElement('div');
+            savedIndicator.className = 'saved-indicator text-green-400 text-xs mt-1';
+            savedIndicator.innerHTML = '<i class="fas fa-check mr-1"></i>Zapisano';
+            this.parentNode.appendChild(savedIndicator);
+
+            setTimeout(() => {
+                savedIndicator.remove();
+            }, 2000);
+        }, 1000);
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+            switch(e.key) {
+                case 'b':
+                    e.preventDefault();
+                    window.location.href = '@Url.Action("RepairDetails", "Service", new { id = Model.ID })';
+                    break;
+                case 's':
+                    e.preventDefault();
+                    document.querySelector('form').submit();
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    exportPartsList();
+                    break;
+            }
+        }
+    });
+
+    // Search functionality for parts dropdown
+    function addSearchToSelect() {
+        const select = document.querySelector('select[name="exploitationPartId"]');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative';
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Wyszukaj część...';
+        searchInput.className = 'form-input w-full px-3 py-2 mb-2';
+
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(searchInput);
+        wrapper.appendChild(select);
+
+        const originalOptions = Array.from(select.options);
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            select.innerHTML = '';
+
+            originalOptions.forEach(option => {
+                if (option.text.toLowerCase().includes(searchTerm) || option.value === '') {
+                    select.appendChild(option.cloneNode(true));
+                }
+            });
+        });
+    }
+
+    // Initialize search functionality
+    document.addEventListener('DOMContentLoaded', addSearchToSelect);
+
+    // Part card interactions
+    document.querySelectorAll('.part-card').forEach(card => {
+        // Add click to expand/collapse details
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-btn')) return;
+
+            this.classList.toggle('expanded');
+            const details = this.querySelector('.space-y-3');
+
+            if (this.classList.contains('expanded')) {
+                details.style.maxHeight = details.scrollHeight + 'px';
+                this.style.transform = 'scale(1.02)';
+            } else {
+                details.style.maxHeight = '200px';
+                this.style.transform = 'scale(1)';
+            }
+        });
+
+        // Add double-click to edit notes
+        card.addEventListener('dblclick', function() {
+            const notesElement = this.querySelector('.text-gray-300');
+            if (notesElement && notesElement.textContent.trim()) {
+                const currentNotes = notesElement.textContent.trim();
+                const newNotes = prompt('Edytuj uwagi:', currentNotes);
+
+                if (newNotes !== null && newNotes !== currentNotes) {
+                    // Here you would typically make an AJAX call to update notes
+                    notesElement.textContent = newNotes;
+
+                    // Show update indicator
+                    const indicator = document.createElement('div');
+                    indicator.className = 'update-indicator text-blue-400 text-xs mt-1';
+                    indicator.innerHTML = '<i class="fas fa-check mr-1"></i>Uwagi zaktualizowane';
+                    notesElement.parentNode.appendChild(indicator);
+
+                    setTimeout(() => {
+                        indicator.remove();
+                    }, 3000);
+                }
+            }
+        });
+    });
+
+    // Context menu for part cards
+    document.querySelectorAll('.part-card').forEach(card => {
+        card.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            showPartContextMenu(e.pageX, e.pageY, this);
+        });
+    });
+
+    function showPartContextMenu(x, y, partCard) {
+        // Remove existing context menu
+        const existingMenu = document.querySelector('.context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        const partId = partCard.dataset.partId;
+        const partName = partCard.querySelector('h3').textContent.trim();
+
+        // Create context menu
+        const contextMenu = document.createElement('div');
+        contextMenu.className = 'context-menu fixed bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 py-2';
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+
+        contextMenu.innerHTML = `
+            <button onclick="editPartNotes('${partId}')" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 flex items-center">
+                <i class="fas fa-edit mr-2"></i> Edytuj uwagi
+            </button>
+            <button onclick="viewPartDetails('${partId}')" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 flex items-center">
+                <i class="fas fa-eye mr-2"></i> Zobacz szczegóły części
+            </button>
+            <button onclick="copyPartInfo('${partName}')" class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 flex items-center">
+                <i class="fas fa-copy mr-2"></i> Kopiuj nazwę części
+            </button>
+            <button onclick="removePartFromRepair(@Model.ID, ${partId})" class="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-trash mr-2"></i> Usuń z naprawy
+            </button>
+        `;
+
+        document.body.appendChild(contextMenu);
+
+        // Close menu on click outside
+        setTimeout(() => {
+            document.addEventListener('click', function closeMenu() {
+                contextMenu.remove();
+                document.removeEventListener('click', closeMenu);
+            });
+        }, 100);
+    }
+
+    // Context menu helper functions
+    window.editPartNotes = function(partId) {
+        const partCard = document.querySelector(`[data-part-id="${partId}"]`);
+        const notesElement = partCard.querySelector('.text-gray-300');
+        const currentNotes = notesElement ? notesElement.textContent.trim() : '';
+
+        const newNotes = prompt('Edytuj uwagi o części:', currentNotes);
+        if (newNotes !== null) {
+            // Update UI immediately
+            if (notesElement) {
+                notesElement.textContent = newNotes;
+            }
+            // Here you would make an AJAX call to save the changes
+        }
+    };
+
+    window.viewPartDetails = function(partId) {
+        // This would typically open a modal or navigate to part details
+        alert(`Szczegóły części ID: ${partId} - funkcja w przygotowaniu`);
+    };
+
+    window.copyPartInfo = function(partName) {
+        navigator.clipboard.writeText(partName).then(() => {
+            // Show copied indicator
+            const indicator = document.createElement('div');
+            indicator.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg z-50';
+            indicator.innerHTML = '<i class="fas fa-check mr-2"></i>Skopiowano do schowka';
+            document.body.appendChild(indicator);
+
+            setTimeout(() => {
+                indicator.remove();
+            }, 2000);
+        });
+    };
+
+    // Auto-refresh for real-time updates
+    setInterval(function() {
+        if (!document.hidden) {
+            // Check for updates without refreshing the page
+            fetch(window.location.href + '?ajax=true')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.partsCount !== @Model.RepairParts.Count) {
+                        // Show update notification
+                        const notification = document.createElement('div');
+                        notification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg z-50 cursor-pointer';
+                        notification.innerHTML = '<i class="fas fa-refresh mr-2"></i>Dostępne aktualizacje - kliknij aby odświeżyć';
+                        notification.onclick = () => location.reload();
+                        document.body.appendChild(notification);
+                    }
+                })
+                .catch(error => {
+                    console.log('Auto-refresh error:', error);
+                });
+        }
+    }, 30000);
+
+    // Add tooltips to buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        const buttons = {
+            'button[type="submit"]': 'Dodaj wybraną część do naprawy (Ctrl+S)',
+            'a[href*="RepairDetails"]': 'Powrót do szczegółów naprawy (Ctrl+B)',
+            'button[onclick*="exportPartsList"]': 'Eksportuj listę części do CSV (Ctrl+E)'
+        };
+
+        Object.entries(buttons).forEach(([selector, title]) => {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.title = title;
+            }
+        });
+    });
+</script>
+}

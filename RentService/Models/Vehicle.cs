@@ -1,10 +1,13 @@
-namespace RentService.Models.VehicleModule;
+using RentService.Models.VehicleModule;
+
+namespace RentService.Models;
 
 public class Vehicle
 {
    public Vehicle()
    {
       ExploitationParts = new List<ExploitationPart>();
+      Repairs = new List<Repair>();
    }
    public int ID { get;  set; }
    public string Model { get; set; }
@@ -18,4 +21,6 @@ public class Vehicle
    public string Notes { get; set; }
    
    public ICollection<ExploitationPart> ExploitationParts { get; set; }
+   public ICollection<Repair> Repairs { get; set; }
+
 }

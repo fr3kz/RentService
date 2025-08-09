@@ -1,0 +1,1011 @@
+@{
+ViewData["Title"] = "Szczegóły naprawy";
+Layout = "_Layout";
+}
+
+@model RentService.Models.Repair
+
+@section Head {
+<style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .detail-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .status-completed {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: rgb(16, 185, 129);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-inprogress {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: rgb(59, 130, 246);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .status-scheduled {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: rgb(245, 158, 11);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-cancelled {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: rgb(239, 68, 68);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-waitingforparts {
+        background-color: rgba(168, 85, 247, 0.2);
+        color: rgb(168, 85, 247);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .status-waitingforpayment {
+        background-color: rgba(236, 72, 153, 0.2);
+        color: rgb(236, 72, 153);
+        border: 1px solid rgba(236, 72, 153, 0.3);
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #9ca3af;
+        display: flex;
+        align-items: center;
+    }
+
+    .info-value {
+        font-weight: 500;
+        color: #ffffff;
+        text-align: right;
+    }
+
+    .vehicle-preview {
+        width: 8rem;
+        height: 8rem;
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0 auto 1.5rem auto;
+    }
+
+    .parts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .part-card {
+        background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+        border: 1px solid #4b5563;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .part-card:hover {
+        transform: translateY(-2px);
+        border-color: #6b7280;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        width: 0.75rem;
+        height: 0.75rem;
+        background: #dc2626;
+        border-radius: 50%;
+        border: 2px solid #1f2937;
+    }
+
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 0.8125rem;
+        top: 1.25rem;
+        width: 2px;
+        height: calc(100% - 0.75rem);
+        background: #374151;
+    }
+
+    .timeline-item:last-child::after {
+        display: none;
+    }
+
+    .cost-breakdown {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        color: white;
+        text-align: center;
+    }
+
+    .action-button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .action-button:hover::before {
+        left: 100%;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 0.5rem;
+        background-color: #374151;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #dc2626, #ef4444);
+        border-radius: 0.25rem;
+        transition: width 1s ease;
+    }
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-semibold text-white">Szczegóły naprawy</h1>
+                        <p class="text-sm text-gray-400">@Model.Vehicle.Model - @Model.Vehicle.RegistrationNumber</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="@Url.Action("RepairEdit", "Service", new { id = Model.ID })"
+                       class="action-button bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                        <i class="fas fa-edit mr-2"></i>
+                        Edytuj
+                    </a>
+                    <a href="@Url.Action("ManageRepairParts", "Service", new { repairId = Model.ID })"
+                       class="action-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                        <i class="fas fa-cogs mr-2"></i>
+                        Części
+                    </a>
+                    <a href="@Url.Action("RepairsList", "Service")"
+                       class="action-button bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Powrót
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Left Column - Main Info -->
+                <div class="lg:col-span-2 space-y-8">
+
+                    <!-- Vehicle and Repair Overview -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-white flex items-center">
+                                <i class="fas fa-car mr-3 text-red-400"></i>
+                                Informacje o naprawie
+                            </h2>
+                            @{
+                            var statusClass = Model.Status switch
+                            {
+                            RentService.Models.RepairStatus.Completed => "status-completed",
+                            RentService.Models.RepairStatus.InProgress => "status-inprogress",
+                            RentService.Models.RepairStatus.Scheduled => "status-scheduled",
+                            RentService.Models.RepairStatus.Cancelled => "status-cancelled",
+                            RentService.Models.RepairStatus.WaitingForParts => "status-waitingforparts",
+                            RentService.Models.RepairStatus.WaitingForPayment => "status-waitingforpayment",
+                            _ => "status-scheduled"
+                            };
+
+                            var statusText = Model.Status switch
+                            {
+                            RentService.Models.RepairStatus.Completed => "Zakończona",
+                            RentService.Models.RepairStatus.InProgress => "W trakcie",
+                            RentService.Models.RepairStatus.Scheduled => "Zaplanowana",
+                            RentService.Models.RepairStatus.Cancelled => "Anulowana",
+                            RentService.Models.RepairStatus.WaitingForParts => "Oczekuje na części",
+                            RentService.Models.RepairStatus.WaitingForPayment => "Oczekuje na płatność",
+                            _ => "Nieznany"
+                            };
+                            }
+                            <span class="status-badge @statusClass">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                @statusText
+                            </span>
+                        </div>
+
+                        <div class="vehicle-preview">
+                            <i class="fas fa-wrench"></i>
+                        </div>
+
+                        <div class="space-y-0">
+                            <div class="info-item">
+                                <span class="info-label">
+                                    <i class="fas fa-car mr-2 text-red-400"></i>
+                                    Pojazd
+                                </span>
+                                <span class="info-value">@Model.Vehicle.Model</span>
+                            </div>
+
+                            <div class="info-item">
+                                <span class="info-label">
+                                    <i class="fas fa-id-card mr-2 text-blue-400"></i>
+                                    Numer rejestracyjny
+                                </span>
+                                <span class="info-value">@Model.Vehicle.RegistrationNumber</span>
+                            </div>
+
+                            <div class="info-item">
+                                <span class="info-label">
+                                    <i class="fas fa-wrench mr-2 text-yellow-400"></i>
+                                    Typ naprawy
+                                </span>
+                                <span class="info-value">
+                                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
+                                        @Model.RepairType.ToString()
+                                    </span>
+                                </span>
+                            </div>
+
+                            <div class="info-item">
+                                <span class="info-label">
+                                    <i class="fas fa-calendar-alt mr-2 text-purple-400"></i>
+                                    Data naprawy
+                                </span>
+                                <span class="info-value">@Model.RepairDate.ToString("dd MMMM yyyy")</span>
+                            </div>
+
+                            @if (Model.StartDate.HasValue)
+                            {
+                            <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-play mr-2 text-green-400"></i>
+                                        Data rozpoczęcia
+                                    </span>
+                                <span class="info-value text-green-400">@Model.StartDate.Value.ToString("dd MMMM yyyy")</span>
+                            </div>
+                            }
+
+                            @if (Model.CompletionDate.HasValue)
+                            {
+                            <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-calendar-check mr-2 text-green-400"></i>
+                                        Data zakończenia
+                                    </span>
+                                <span class="info-value text-green-400">@Model.CompletionDate.Value.ToString("dd MMMM yyyy")</span>
+                            </div>
+
+                            @if (Model.StartDate.HasValue)
+                            {
+                            <div class="info-item">
+                                        <span class="info-label">
+                                            <i class="fas fa-clock mr-2 text-orange-400"></i>
+                                            Czas trwania
+                                        </span>
+                                <span class="info-value text-orange-400">@((Model.CompletionDate.Value - Model.StartDate.Value).Days) dni</span>
+                            </div>
+                            }
+                            }
+                            else if (Model.StartDate.HasValue)
+                            {
+                            <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-hourglass-half mr-2 text-yellow-400"></i>
+                                        Czas od rozpoczęcia
+                                    </span>
+                                <span class="info-value text-yellow-400">@((DateTime.Now - Model.StartDate.Value).Days) dni</span>
+                            </div>
+                            }
+
+                            <div class="info-item">
+                                <span class="info-label">
+                                    <i class="fas fa-tachometer-alt mr-2 text-cyan-400"></i>
+                                    Przebieg przy naprawie
+                                </span>
+                                <span class="info-value text-cyan-400">@Model.MileageAtRepair.ToString("N0") km</span>
+                            </div>
+
+                            <div class="info-item">
+                                <span class="info-label">
+                                    <i class="fas fa-dollar-sign mr-2 text-green-400"></i>
+                                    Koszt naprawy
+                                </span>
+                                <span class="info-value text-green-400 font-bold text-lg">@Model.Cost.ToString("C")</span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(Model.InvoiceNumber))
+                            {
+                            <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-receipt mr-2 text-indigo-400"></i>
+                                        Numer faktury
+                                    </span>
+                                <span class="info-value text-indigo-400">@Model.InvoiceNumber</span>
+                            </div>
+                            }
+
+                            @if (Model.WarrantyMonths.HasValue && Model.WarrantyMonths > 0)
+                            {
+                            <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-shield-alt mr-2 text-emerald-400"></i>
+                                        Gwarancja
+                                    </span>
+                                <span class="info-value text-emerald-400">@Model.WarrantyMonths miesięcy</span>
+                            </div>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                        <div class="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-600">
+                            <h3 class="text-sm font-medium text-gray-400 mb-2">Opis naprawy:</h3>
+                            <p class="text-white text-sm leading-relaxed">@Model.Description</p>
+                        </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.AdditionalNotes))
+                        {
+                        <div class="mt-4 p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+                            <h3 class="text-sm font-medium text-yellow-400 mb-2">Dodatkowe uwagi:</h3>
+                            <p class="text-yellow-300 text-sm leading-relaxed">@Model.AdditionalNotes</p>
+                        </div>
+                        }
+                    </div>
+
+                    <!-- Repair Parts -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-white flex items-center">
+                                <i class="fas fa-cogs mr-3 text-blue-400"></i>
+                                Części eksploatacyjne (@Model.RepairParts.Count)
+                            </h2>
+                            <a href="@Url.Action("ManageRepairParts", "Service", new { repairId = Model.ID })"
+                               class="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                                Zarządzaj częściami <i class="fas fa-external-link-alt ml-1"></i>
+                            </a>
+                        </div>
+
+                        @if (Model.RepairParts.Any())
+                        {
+                        <div class="parts-grid">
+                            @foreach (var repairPart in Model.RepairParts)
+                            {
+                            <div class="part-card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <h3 class="font-medium text-white">@repairPart.ExploitationPart.PartName</h3>
+                                    <span class="text-blue-400 font-semibold">@repairPart.ExploitationPart.PartType</span>
+                                </div>
+
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-400">Akcja:</span>
+                                        <span class="text-white">@repairPart.Action</span>
+                                    </div>
+
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-400">Stan części:</span>
+                                        <span class="text-white">@repairPart.ExploitationPart.PartCondition</span>
+                                    </div>
+
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-400">Całkowity przebieg:</span>
+                                        <span class="text-white">@repairPart.ExploitationPart.TotalKm.ToString("N0") km</span>
+                                    </div>
+
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-400">Aktualny przebieg:</span>
+                                        <span class="text-yellow-400">@repairPart.ExploitationPart.CurrentKm.ToString("N0") km</span>
+                                    </div>
+
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-400">Ostatnia wymiana:</span>
+                                        <span class="text-gray-300">@repairPart.ExploitationPart.LastReplacementDate.ToString("dd.MM.yyyy")</span>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(repairPart.PartNotes))
+                                    {
+                                    <div class="pt-2 border-t border-gray-600">
+                                        <span class="text-gray-400 text-xs">Uwagi:</span>
+                                        <p class="text-gray-300 text-xs mt-1">@repairPart.PartNotes</p>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        }
+                        else
+                        {
+                        <div class="text-center py-8">
+                            <i class="fas fa-cogs text-4xl text-gray-600 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-400 mb-2">Brak części eksploatacyjnych</h3>
+                            <p class="text-gray-500 mb-4">Ta naprawa nie dotyczy części eksploatacyjnych</p>
+                            <a href="@Url.Action("ManageRepairParts", "Service", new { repairId = Model.ID })"
+                               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                                <i class="fas fa-plus mr-2"></i>
+                                Dodaj części
+                            </a>
+                        </div>
+                        }
+                    </div>
+
+                </div>
+
+                <!-- Right Column - Timeline & Actions -->
+                <div class="space-y-8">
+
+                    <!-- Cost Breakdown -->
+                    <div class="cost-breakdown">
+                        <div class="mb-4">
+                            <i class="fas fa-chart-pie text-3xl mb-2"></i>
+                            <h3 class="text-lg font-semibold">Analiza kosztów</h3>
+                        </div>
+
+                        <div class="space-y-3 text-left">
+                            <div class="flex justify-between">
+                                <span>Łączny koszt:</span>
+                                <span class="font-semibold text-lg">@Model.Cost.ToString("C")</span>
+                            </div>
+
+                            @if (Model.RepairParts.Any())
+                            {
+                            <div class="flex justify-between text-sm">
+                                <span>Części eksploatacyjne:</span>
+                                <span>@Model.RepairParts.Count szt.</span>
+                            </div>
+                            }
+
+                            @if (Model.WarrantyMonths.HasValue && Model.WarrantyMonths > 0)
+                            {
+                            <div class="flex justify-between text-sm">
+                                <span>Gwarancja do:</span>
+                                <span>@DateTime.Now.AddMonths(Model.WarrantyMonths.Value).ToString("MM/yyyy")</span>
+                            </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.InvoiceNumber))
+                            {
+                            <div class="flex justify-between text-sm">
+                                <span>Nr faktury:</span>
+                                <span>@Model.InvoiceNumber</span>
+                            </div>
+                            }
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="mt-6">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span>Postęp naprawy</span>
+                                <span>@(Model.Status == RentService.Models.RepairStatus.Completed ? "100" : Model.Status == RentService.Models.RepairStatus.InProgress ? "75" : "25")%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: @(Model.Status == RentService.Models.RepairStatus.Completed ? "100" : Model.Status == RentService.Models.RepairStatus.InProgress ? "75" : "25")%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                            <i class="fas fa-history mr-3 text-purple-400"></i>
+                            Historia naprawy
+                        </h2>
+
+                        <div class="space-y-0">
+                            <div class="timeline-item">
+                                <div class="bg-gray-800 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-medium text-white">Zgłoszenie naprawy</h4>
+                                        <span class="text-xs text-gray-400">@Model.RepairDate.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                    <p class="text-sm text-gray-300">
+                                        Naprawa typu "@Model.RepairType" została zgłoszona dla pojazdu @Model.Vehicle.Model przy przebiegu @Model.MileageAtRepair.ToString("N0") km.
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if (Model.StartDate.HasValue)
+                            {
+                            <div class="timeline-item">
+                                <div class="bg-gray-800 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-medium text-white">Rozpoczęcie prac</h4>
+                                        <span class="text-xs text-gray-400">@Model.StartDate.Value.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                    <p class="text-sm text-gray-300">
+                                        Rozpoczęto prace naprawcze.
+                                    </p>
+                                </div>
+                            </div>
+                            }
+
+                            @if (Model.RepairParts.Any())
+                            {
+                            <div class="timeline-item">
+                                <div class="bg-gray-800 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-medium text-white">Obsługa części eksploatacyjnych</h4>
+                                        <span class="text-xs text-gray-400">@((Model.StartDate ?? Model.RepairDate).AddDays(1).ToString("dd.MM.yyyy"))</span>
+                                    </div>
+                                    <p class="text-sm text-gray-300">
+                                        Obsłużono @Model.RepairParts.Count części eksploatacyjnych:
+                                        @string.Join(", ", Model.RepairParts.Select(rp => rp.ExploitationPart.PartName).Take(3))@(Model.RepairParts.Count > 3 ? "..." : "").
+                                    </p>
+                                </div>
+                            </div>
+                            }
+
+                            @if (Model.Status == RentService.Models.RepairStatus.Completed && Model.CompletionDate.HasValue)
+                            {
+                            <div class="timeline-item">
+                                <div class="bg-gray-800 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-medium text-white">Zakończenie naprawy</h4>
+                                        <span class="text-xs text-gray-400">@Model.CompletionDate.Value.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                    <p class="text-sm text-gray-300">
+                                        Naprawa została pomyślnie zakończona.
+                                        @if (Model.StartDate.HasValue)
+                                        {
+                                        <text>Całkowity czas: @((Model.CompletionDate.Value - Model.StartDate.Value).Days) dni.</text>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            }
+                            else
+                            {
+                            <div class="timeline-item">
+                                <div class="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-medium text-yellow-400">@statusText</h4>
+                                        <span class="text-xs text-gray-400">Obecnie</span>
+                                    </div>
+                                    <p class="text-sm text-yellow-300">
+                                        Naprawa jest w statusie: @statusText.
+                                        @if (Model.StartDate.HasValue)
+                                        {
+                                        <text>Czas od rozpoczęcia: @((DateTime.Now - Model.StartDate.Value).Days) dni.</text>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="detail-card rounded-lg shadow-lg border border-gray-700 p-6">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center">
+                            <i class="fas fa-bolt mr-3 text-yellow-400"></i>
+                            Szybkie akcje
+                        </h2>
+
+                        <div class="space-y-3">
+                            @if (Model.Status != RentService.Models.RepairStatus.Completed)
+                            {
+                            <button onclick="markAsCompleted(@Model.ID)"
+                                    class="action-button w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-check mr-2"></i>
+                                Oznacz jako zakończoną
+                            </button>
+                            }
+                            else
+                            {
+                            <button onclick="reopenRepair(@Model.ID)"
+                                    class="action-button w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-undo mr-2"></i>
+                                Ponownie otwórz naprawę
+                            </button>
+                            }
+
+                            <a href="@Url.Action("GenerateReport", "Repair", new { id = Model.ID })"
+                               class="action-button w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-file-pdf mr-2"></i>
+                                Generuj raport PDF
+                            </a>
+
+                            <a href="@Url.Action("VehicleDetail", "Vehicle", new { id = Model.VehicleID })"
+                               class="action-button w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-car mr-2"></i>
+                                Zobacz pojazd
+                            </a>
+
+                            <button onclick="duplicateRepair(@Model.ID)"
+                                    class="action-button w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-copy mr-2"></i>
+                                Duplikuj naprawę
+                            </button>
+
+                            <button onclick="deleteRepair(@Model.ID)"
+                                    class="action-button w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                                <i class="fas fa-trash mr-2"></i>
+                                Usuń naprawę
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const userInfo = document.getElementById('user-info');
+    const navTexts = document.querySelectorAll('.nav-text');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                if (logoText) logoText.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                navTexts.forEach(text => text.style.display = 'none');
+            } else {
+                if (logoText) logoText.style.display = 'block';
+                if (userInfo) userInfo.style.display = 'block';
+                navTexts.forEach(text => text.style.display = 'block');
+            }
+        });
+    }
+
+    // Mark repair as completed
+    window.markAsCompleted = function(repairId) {
+        if (confirm('Czy na pewno chcesz oznączyć tę naprawę jako zakończoną?')) {
+            fetch(`@Url.Action("MarkAsCompleted", "Repair")/${repairId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Błąd: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd podczas oznaczania naprawy jako zakończonej.');
+                });
+        }
+    };
+
+    // Reopen repair
+    window.reopenRepair = function(repairId) {
+        if (confirm('Czy na pewno chcesz ponownie otworzyć tę naprawę?')) {
+            fetch(`@Url.Action("ReopenRepair", "Repair")/${repairId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Błąd: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd podczas ponownego otwierania naprawy.');
+                });
+        }
+    };
+
+    // Duplicate repair
+    window.duplicateRepair = function(repairId) {
+        if (confirm('Czy na pewno chcesz utworzyć kopię tej naprawy?')) {
+            fetch(`@Url.Action("DuplicateRepair", "Repair")/${repairId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = `@Url.Action("RepairDetails", "Repair")/${data.newRepairId}`;
+                    } else {
+                        alert('Błąd: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd podczas duplikowania naprawy.');
+                });
+        }
+    };
+
+    // Delete repair
+    window.deleteRepair = function(repairId) {
+        if (confirm('Czy na pewno chcesz usunąć tę naprawę? Ta operacja jest nieodwracalna!')) {
+            fetch(`@Url.Action("RepairDelete", "Repair")/${repairId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '@Url.Action("RepairList", "Repair")';
+                    } else {
+                        alert('Błąd: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd podczas usuwania naprawy.');
+                });
+        }
+    };
+
+    // Print functionality
+    function printRepairDetails() {
+        window.print();
+    }
+
+    // Add animations on page load
+    window.addEventListener('load', function() {
+        // Animate progress bar
+        const progressFill = document.querySelector('.progress-fill');
+        if (progressFill) {
+            const targetWidth = progressFill.style.width;
+            progressFill.style.width = '0%';
+            setTimeout(() => {
+                progressFill.style.width = targetWidth;
+            }, 500);
+        }
+
+        // Animate cards
+        const cards = document.querySelectorAll('.detail-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+            switch(e.key) {
+                case 'e':
+                    e.preventDefault();
+                    window.location.href = '@Url.Action("RepairEdit", "Repair", new { id = Model.ID })';
+                    break;
+                case 'p':
+                    e.preventDefault();
+                    printRepairDetails();
+                    break;
+                case 'b':
+                    e.preventDefault();
+                    window.location.href = '@Url.Action("RepairList", "Repair")';
+                    break;
+            }
+        }
+    });
+
+    // Add tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add title attributes for keyboard shortcuts
+        const editBtn = document.querySelector('a[href*="RepairEdit"]');
+        if (editBtn) {
+            editBtn.title = 'Edytuj naprawę (Ctrl+E)';
+        }
+
+        const backBtn = document.querySelector('a[href*="RepairList"]');
+        if (backBtn) {
+            backBtn.title = 'Powrót do listy (Ctrl+B)';
+        }
+
+        // Add hover effects to timeline items
+        const timelineItems = document.querySelectorAll('.timeline-item');
+        timelineItems.forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(5px)';
+                this.style.transition = 'transform 0.3s ease';
+            });
+
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateX(0)';
+            });
+        });
+    });
+
+    // Auto-refresh if repair is in progress (every 30 seconds)
+    @if (Model.Status == RentService.Models.RepairStatus.InProgress)
+    {
+    <text>
+    setInterval(function() {
+        // Check if page is visible
+        if (!document.hidden) {
+            fetch(window.location.href + '?ajax=true')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.isCompleted) {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.log('Auto-refresh error:', error);
+                });
+        }
+    }, 30000);
+    </text>
+    }
+
+    // Smooth scroll to sections
+    function scrollToSection(sectionId) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }
+
+    // Add click handlers for info items
+    document.querySelectorAll('.info-item').forEach(item => {
+        item.addEventListener('click', function() {
+            // Add a subtle animation when clicked
+            this.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            setTimeout(() => {
+                this.style.backgroundColor = '';
+            }, 200);
+        });
+    });
+
+    // Vehicle preview animation
+    const vehiclePreview = document.querySelector('.vehicle-preview');
+    if (vehiclePreview) {
+        vehiclePreview.addEventListener('mouseenter', function() {
+            this.style.transform = 'rotate(5deg) scale(1.05)';
+            this.style.transition = 'all 0.3s ease';
+        });
+
+        vehiclePreview.addEventListener('mouseleave', function() {
+            this.style.transform = 'rotate(0deg) scale(1)';
+        });
+    }
+
+    
+
+    // Run cost animation on load
+    setTimeout(animateCosts, 1000);
+
+    // Part cards hover effects
+    document.querySelectorAll('.part-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.borderColor = '#3b82f6';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.borderColor = '#4b5563';
+        });
+    });
+
+    // Status badge animation
+    const statusBadge = document.querySelector('.status-badge');
+    if (statusBadge) {
+        statusBadge.addEventListener('click', function() {
+            this.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    }
+
+    // Add loading states for action buttons
+    document.querySelectorAll('.action-button').forEach(button => {
+        button.addEventListener('click', function() {
+            if (this.tagName === 'BUTTON') {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Ładowanie...';
+                this.disabled = true;
+
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }, 2000);
+            }
+        });
+    });
+</script>
+}

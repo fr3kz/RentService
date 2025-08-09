@@ -16,6 +16,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
     
     public DbSet<ExploitationPart> ExploitationParts { get; set; }
 
+    public DbSet<Repair> Repairs { get; set; }
+    public DbSet<RepairExploitationPart> RepairExploitationParts { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -112,6 +114,24 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
            
         });
 
-       
+        modelBuilder.Entity<Repair>()
+            .HasOne(r => r.Vehicle)
+            .WithMany(v => v.Repairs)
+            .HasForeignKey(r => r.VehicleID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RepairExploitationPart>()
+            .HasKey(rp => new { rp.RepairID, rp.ExploitationPartID });
+
+        modelBuilder.Entity<RepairExploitationPart>()
+            .HasOne(rp => rp.Repair)
+            .WithMany(r => r.RepairParts)
+            .HasForeignKey(rp => rp.RepairID);
+
+        modelBuilder.Entity<RepairExploitationPart>()
+            .HasOne(rp => rp.ExploitationPart)
+            .WithMany(ep => ep.RepairParts)
+            .HasForeignKey(rp => rp.ExploitationPartID);
+
     }
 }

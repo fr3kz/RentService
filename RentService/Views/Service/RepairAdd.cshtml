@@ -1,0 +1,674 @@
+@model RentService.Models.Repair
+
+@{
+ViewData["Title"] = "Dodaj naprawę";
+Layout = "_Layout";
+}
+
+@section Head {
+<style>
+    .form-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #e5e7eb;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 0.5rem;
+        color: #ffffff;
+        font-size: 1rem;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-error {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .form-help {
+        color: #9ca3af;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .required::after {
+        content: " *";
+        color: #ef4444;
+    }
+
+    .form-section {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #374151;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .form-grid-third {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .form-grid-full {
+        grid-column: 1 / -1;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: #ffffff;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+
+    .btn-secondary {
+        background-color: #6b7280;
+        color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+
+    .currency-input-container, .number-input-container {
+        position: relative;
+    }
+
+    .currency-input-container::after {
+        content: "zł";
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        pointer-events: none;
+    }
+
+    .number-input-container::after {
+        content: "km";
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        pointer-events: none;
+    }
+
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .validation-summary {
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .validation-summary ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .validation-summary li {
+        margin-bottom: 0.25rem;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-success {
+        background-color: rgba(5, 150, 105, 0.1);
+        border: 1px solid rgba(5, 150, 105, 0.2);
+        color: #10b981;
+    }
+
+    .alert-error {
+        background-color: rgba(220, 38, 38, 0.1);
+        border: 1px solid rgba(220, 38, 38, 0.2);
+        color: #ef4444;
+    }
+
+    .vehicle-info {
+        background-color: #111827;
+        border: 1px solid #374151;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .vehicle-info h4 {
+        color: #3b82f6;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .vehicle-info p {
+        color: #9ca3af;
+        margin: 0;
+        font-size: 0.875rem;
+    }
+</style>
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <nav class="ml-4 flex items-center space-x-2 text-sm text-gray-400">
+                        <a href="@Url.Action("RepairsList", "Service")" class="hover:text-white transition-colors">
+                            <i class="fas fa-wrench mr-1"></i>
+                            Naprawy
+                        </a>
+                        <i class="fas fa-chevron-right text-xs"></i>
+                        <span class="text-white">Dodaj naprawę</span>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-400 hover:text-white relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">3</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+            <div class="form-container">
+
+                <!-- Success/Error Messages -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    @TempData["SuccessMessage"]
+                </div>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    @TempData["ErrorMessage"]
+                </div>
+                }
+
+                <!-- Page Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Dodaj nową naprawę</h1>
+                    <p class="text-gray-400">Wprowadź szczegółowe informacje o naprawie pojazdu</p>
+                </div>
+
+                <!-- Validation Summary -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                <div class="validation-summary">
+                    <h4 class="font-semibold mb-2">Wystąpiły błędy walidacji:</h4>
+                    <ul>
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                        <li>• @error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+                }
+
+                <!-- Form -->
+                <form asp-action="RepairAdd" method="post" class="space-y-6">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Vehicle Selection Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">
+                            <i class="fas fa-car mr-2"></i>
+                            Pojazd i podstawowe informacje
+                        </h2>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label asp-for="VehicleID" class="form-label required">Pojazd</label>
+                                <select asp-for="VehicleID" asp-items="ViewBag.Vehicles" class="form-select" id="vehicleSelect">
+                                    <option value="">-- Wybierz pojazd --</option>
+                                </select>
+                                <span asp-validation-for="VehicleID" class="form-error"></span>
+                                <div class="form-help">Wybierz pojazd z listy dostępnych</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="RepairDate" class="form-label required">Data naprawy</label>
+                                <input asp-for="RepairDate" type="date" class="form-input" id="repairDateInput" />
+                                <span asp-validation-for="RepairDate" class="form-error"></span>
+                                <div class="form-help">Data wykonania naprawy</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="MileageAtRepair" class="form-label required">Przebieg w momencie naprawy</label>
+                                <div class="number-input-container">
+                                    <input asp-for="MileageAtRepair" type="number" class="form-input" min="0" placeholder="0" />
+                                </div>
+                                <span asp-validation-for="MileageAtRepair" class="form-error"></span>
+                                <div class="form-help">Aktualny przebieg pojazdu w kilometrach</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Cost" class="form-label required">Koszt naprawy</label>
+                                <div class="currency-input-container">
+                                    <input asp-for="Cost" type="number" step="0.01" class="form-input" min="0" placeholder="0.00" />
+                                </div>
+                                <span asp-validation-for="Cost" class="form-error"></span>
+                                <div class="form-help">Całkowity koszt naprawy w złotych</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Repair Details Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">
+                            <i class="fas fa-tools mr-2"></i>
+                            Szczegóły naprawy
+                        </h2>
+
+                        <div class="form-grid-third">
+                            <div class="form-group">
+                                <label asp-for="RepairType" class="form-label required">Typ naprawy</label>
+                                <select asp-for="RepairType" asp-items="ViewBag.RepairTypes" class="form-select">
+                                    <option value="">-- Wybierz typ --</option>
+                                </select>
+                                <span asp-validation-for="RepairType" class="form-error"></span>
+                            </div>
+
+                           
+
+                            <div class="form-group">
+                                <label asp-for="Status" class="form-label required">Status</label>
+                                <select asp-for="Status" asp-items="ViewBag.RepairStatuses" class="form-select">
+                                    <option value="">-- Wybierz status --</option>
+                                </select>
+                                <span asp-validation-for="Status" class="form-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Description" class="form-label required">Opis naprawy</label>
+                            <textarea asp-for="Description" class="form-textarea" rows="4"
+                                      placeholder="Szczegółowy opis wykonanych prac, zastąpionych części, problemów..."></textarea>
+                            <span asp-validation-for="Description" class="form-error"></span>
+                            <div class="form-help">Dokładny opis wykonanych czynności (maksymalnie 1000 znaków)</div>
+                        </div>
+                    </div>
+
+                    <!-- Workshop Information Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">
+                            <i class="fas fa-building mr-2"></i>
+                            Informacje o warsztacie
+                        </h2>
+
+                      
+                    </div>
+
+                    <!-- Timeline Section -->
+                    <div class="form-section">
+                        <h2 class="form-section-title">
+                            <i class="fas fa-calendar mr-2"></i>
+                            Harmonogram i dokumentacja
+                        </h2>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label asp-for="StartDate" class="form-label">Data rozpoczęcia</label>
+                                <input asp-for="StartDate" type="date" class="form-input" id="startDateInput" />
+                                <span asp-validation-for="StartDate" class="form-error"></span>
+                                <div class="form-help">Kiedy rozpoczęto prace (opcjonalne)</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="CompletionDate" class="form-label">Data zakończenia</label>
+                                <input asp-for="CompletionDate" type="date" class="form-input" id="completionDateInput" />
+                                <span asp-validation-for="CompletionDate" class="form-error"></span>
+                                <div class="form-help">Kiedy zakończono prace (opcjonalne)</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="InvoiceNumber" class="form-label">Numer faktury</label>
+                                <input asp-for="InvoiceNumber" type="text" class="form-input" placeholder="np. FV/2025/001" />
+                                <span asp-validation-for="InvoiceNumber" class="form-error"></span>
+                                <div class="form-help">Numer faktury za naprawę (opcjonalne)</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="WarrantyMonths" class="form-label">Gwarancja (miesiące)</label>
+                                <input asp-for="WarrantyMonths" type="number" class="form-input" min="0" max="120" placeholder="0" />
+                                <span asp-validation-for="WarrantyMonths" class="form-error"></span>
+                                <div class="form-help">Okres gwarancji w miesiącach (opcjonalne)</div>
+                            </div>
+
+                            <div class="form-group form-grid-full">
+                                <label asp-for="AdditionalNotes" class="form-label">Dodatkowe uwagi</label>
+                                <textarea asp-for="AdditionalNotes" class="form-textarea" rows="3"
+                                          placeholder="Dodatkowe informacje, uwagi, zalecenia..."></textarea>
+                                <span asp-validation-for="AdditionalNotes" class="form-error"></span>
+                                <div class="form-help">Opcjonalne uwagi dotyczące naprawy (maksymalnie 500 znaków)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <a asp-action="RepairsList" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Powrót do listy
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-save mr-2"></i>
+                            Zapisz naprawę
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const logoText = document.getElementById('logo-text');
+    const userInfo = document.getElementById('user-info');
+    const navTexts = document.querySelectorAll('.nav-text');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('sidebar-collapsed');
+
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                if (logoText) logoText.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+                navTexts.forEach(text => text.style.display = 'none');
+            } else {
+                if (logoText) logoText.style.display = 'block';
+                if (userInfo) userInfo.style.display = 'block';
+                navTexts.forEach(text => text.style.display = 'block');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ustaw dzisiejszą datę jako domyślną dla daty naprawy
+        const repairDateInput = document.querySelector('#repairDateInput');
+        if (!repairDateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            repairDateInput.value = today;
+        }
+
+        // Automatyczne ustawienie daty rozpoczęcia na podstawie daty naprawy
+        repairDateInput.addEventListener('change', function() {
+            const startDateInput = document.querySelector('#startDateInput');
+            if (!startDateInput.value) {
+                startDateInput.value = this.value;
+            }
+        });
+
+        // Walidacja dat - data zakończenia nie może być wcześniejsza niż data rozpoczęcia
+        const startDateInput = document.querySelector('#startDateInput');
+        const completionDateInput = document.querySelector('#completionDateInput');
+
+        function validateDates() {
+            if (startDateInput.value && completionDateInput.value) {
+                if (new Date(completionDateInput.value) < new Date(startDateInput.value)) {
+                    completionDateInput.setCustomValidity('Data zakończenia nie może być wcześniejsza niż data rozpoczęcia');
+                } else {
+                    completionDateInput.setCustomValidity('');
+                }
+            }
+        }
+
+        startDateInput.addEventListener('change', validateDates);
+        completionDateInput.addEventListener('change', validateDates);
+
+        // Character counter for description
+        const descriptionTextarea = document.querySelector('#Description');
+        if (descriptionTextarea) {
+            const maxLength = 1000;
+            const helpText = descriptionTextarea.parentNode.querySelector('.form-help');
+
+            function updateDescriptionCounter() {
+                const remaining = maxLength - descriptionTextarea.value.length;
+                helpText.textContent = `Dokładny opis wykonanych czynności (pozostało ${remaining} znaków)`;
+
+                if (remaining < 0) {
+                    descriptionTextarea.classList.add('border-red-500');
+                    helpText.classList.add('text-red-400');
+                } else {
+                    descriptionTextarea.classList.remove('border-red-500');
+                    helpText.classList.remove('text-red-400');
+                }
+            }
+
+            descriptionTextarea.addEventListener('input', updateDescriptionCounter);
+            updateDescriptionCounter();
+        }
+
+        // Character counter for additional notes
+        const notesTextarea = document.querySelector('#AdditionalNotes');
+        if (notesTextarea) {
+            const maxLength = 500;
+            const helpText = notesTextarea.parentNode.querySelector('.form-help');
+
+            function updateNotesCounter() {
+                const remaining = maxLength - notesTextarea.value.length;
+                helpText.textContent = `Opcjonalne uwagi dotyczące naprawy (pozostało ${remaining} znaków)`;
+
+                if (remaining < 0) {
+                    notesTextarea.classList.add('border-red-500');
+                    helpText.classList.add('text-red-400');
+                } else {
+                    notesTextarea.classList.remove('border-red-500');
+                    helpText.classList.remove('text-red-400');
+                }
+            }
+
+            notesTextarea.addEventListener('input', updateNotesCounter);
+            updateNotesCounter();
+        }
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
+        let isValid = true;
+
+        // Clear previous errors
+        document.querySelectorAll('.form-error').forEach(error => {
+            if (!error.dataset.valmsg) {
+                error.textContent = '';
+            }
+        });
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                const errorElement = field.parentNode.querySelector('.form-error');
+                if (errorElement && !errorElement.dataset.valmsg) {
+                    errorElement.textContent = 'To pole jest wymagane';
+                }
+                field.classList.add('border-red-500');
+            } else {
+                field.classList.remove('border-red-500');
+            }
+        });
+
+        // Cost validation (must be positive)
+        const costInput = document.querySelector('#Cost');
+        if (costInput && costInput.value && parseFloat(costInput.value) <= 0) {
+            isValid = false;
+            const errorElement = costInput.parentNode.querySelector('.form-error');
+            if (errorElement && !errorElement.dataset.valmsg) {
+                errorElement.textContent = 'Koszt musi być większy od 0';
+            }
+            costInput.classList.add('border-red-500');
+        }
+
+        // Mileage validation (must be non-negative)
+        const mileageInput = document.querySelector('#MileageAtRepair');
+        if (mileageInput && mileageInput.value && parseFloat(mileageInput.value) < 0) {
+            isValid = false;
+            const errorElement = mileageInput.parentNode.querySelector('.form-error');
+            if (errorElement && !errorElement.dataset.valmsg) {
+                errorElement.textContent = 'Przebieg nie może być ujemny';
+            }
+            mileageInput.classList.add('border-red-500');
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            // Scroll to first error
+            const firstError = document.querySelector('.border-red-500');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        } else {
+            // Show loading state
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Zapisywanie...';
+            submitBtn.disabled = true;
+        }
+    });
+
+    // Real-time validation feedback
+    document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.classList.add('border-red-500');
+            } else {
+                this.classList.remove('border-red-500');
+                const errorElement = this.parentNode.querySelector('.form-error');
+                if (errorElement && !errorElement.dataset.valmsg) {
+                    errorElement.textContent = '';
+                }
+            }
+        });
+
+        input.addEventListener('input', function() {
+            if (this.classList.contains('border-red-500') && this.value.trim()) {
+                this.classList.remove('border-red-500');
+                const errorElement = this.parentNode.querySelector('.form-error');
+                if (errorElement && !errorElement.dataset.valmsg) {
+                    errorElement.textContent = '';
+                }
+            }
+        });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S to save
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            document.querySelector('form').submit();
+        }
+
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            if (confirm('Czy na pewno chcesz anulować? Dane nie zostaną zapisane.')) {
+                window.location.href = '@Url.Action("RepairsList", "Service")';
+            }
+        }
+    });
+
+    // Auto-hide alerts after 5 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => {
+                alert.remove();
+            }, 500);
+        });
+    }, 5000);
+</script>
+}

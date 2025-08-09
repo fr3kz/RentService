@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RentService.Database;
 using RentService.Models.VehicleModule;
 using System.ComponentModel.DataAnnotations;
+using RentService.Models;
 
 namespace RentService.Controllers.VehicleModule;
 
@@ -76,7 +77,12 @@ public class VehicleController : Controller
             return RedirectToAction(nameof(Index));
         }
     }
-    
+
+    [HttpGet]
+    public async Task<IActionResult> VehicleAdd()
+    {
+        return View();
+    }
 
     // POST: Vehicle/VehicleAdd
     [HttpPost]
