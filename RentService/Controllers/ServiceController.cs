@@ -142,7 +142,6 @@ public class ServiceController : Controller
         {
             try
             {
-                // Walidacja dodatkowa
                 if (repair.StartDate.HasValue && repair.StartDate < repair.RepairDate)
                 {
                     ModelState.AddModelError("StartDate", "Data rozpoczęcia nie może być wcześniejsza niż data naprawy.");
@@ -153,7 +152,6 @@ public class ServiceController : Controller
                     ModelState.AddModelError("CompletionDate", "Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.");
                 }
 
-                // Sprawdź czy pojazd istnieje
                 var vehicleExists = await VehicleExistsAsync(repair.VehicleID);
                 if (!vehicleExists)
                 {
@@ -162,17 +160,23 @@ public class ServiceController : Controller
 
                 if (!ModelState.IsValid)
                 {
+                    ModelState.AddModelError("VehicleID", ModelState.Values.ToString());
+
                     await PrepareRepairViewData(repair.VehicleID);
                     return View(repair);
                 }
 
-                // Ustawienie domyślnych wartości
                 if (repair.Status == default)
                 {
                     repair.Status = RepairStatus.Scheduled;
                 }
 
+                Vehicle vehicle = await _context.Cars.FindAsync(repair.VehicleID);
+                repair.Vehicle = vehicle;
+                vehicle.Mileage = repair.MileageAtRepair;
+
                 _context.Repairs.Add(repair);
+                _context.Cars.Update(vehicle);
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"Dodano nową naprawę ID: {repair.ID} dla pojazdu ID: {repair.VehicleID}");
@@ -182,7 +186,7 @@ public class ServiceController : Controller
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Błąd podczas dodawania naprawy");
-                ModelState.AddModelError("", "Wystąpił błąd podczas zapisywania naprawy.");
+                ModelState.AddModelError("", ex.Message);
             }
         }
 
@@ -250,7 +254,6 @@ public class ServiceController : Controller
                 existingRepair.StartDate = repair.StartDate;
                 existingRepair.CompletionDate = repair.CompletionDate;
                 existingRepair.InvoiceNumber = repair.InvoiceNumber;
-                existingRepair.WarrantyMonths = repair.WarrantyMonths;
 
                 // Automatyczne ustawienie daty zakończenia przy zmianie statusu na "Zakończona"
                 if (repair.Status == RepairStatus.Completed && existingRepair.CompletionDate == null)
@@ -350,13 +353,11 @@ public class ServiceController : Controller
                 return RedirectToAction(nameof(RepairsList));
             }
 
-            // AJAX response dla sprawdzania aktualizacji
             if (Request.Query.ContainsKey("ajax"))
             {
                 return Json(new { partsCount = repair.RepairParts.Count });
             }
 
-            // Pobierz dostępne części dla tego pojazdu (wykluczając już przypisane)
             var usedPartIds = repair.RepairParts.Select(rp => rp.ExploitationPartID).ToList();
             var availableParts = await _context.ExploitationParts
                 .Where(ep => ep.VehicleID == repair.VehicleID && !usedPartIds.Contains(ep.ID))
@@ -389,7 +390,6 @@ public class ServiceController : Controller
     {
         try
         {
-            // Sprawdź czy naprawa istnieje
             var repairExists = await _context.Repairs.AnyAsync(r => r.ID == repairId);
             if (!repairExists)
             {
@@ -398,7 +398,6 @@ public class ServiceController : Controller
                 return RedirectToAction(nameof(RepairsList));
             }
 
-            // Sprawdź czy część istnieje
             var partExists = await _context.ExploitationParts.AnyAsync(ep => ep.ID == exploitationPartId);
             if (!partExists)
             {
@@ -407,7 +406,6 @@ public class ServiceController : Controller
                 return RedirectToAction(nameof(ManageRepairParts), new { repairId });
             }
 
-            // Sprawdź czy powiązanie już istnieje
             var existingPart = await _context.RepairExploitationParts
                 .FirstOrDefaultAsync(rp => rp.RepairID == repairId && rp.ExploitationPartID == exploitationPartId);
 
@@ -546,6 +544,7 @@ public class ServiceController : Controller
                     {
                         repair.StartDate = repair.RepairDate;
                     }
+                    //Todo: na czesci musi zaktualizować sie
                     break;
 
                 case RepairStatus.Cancelled:
@@ -556,6 +555,8 @@ public class ServiceController : Controller
             await _context.SaveChangesAsync();
 
             _logger.LogInformation($"Zmieniono status naprawy ID: {repairId} z {oldStatus} na {newStatus}");
+            
+            
             
             if (Request.Headers.Accept.ToString().Contains("application/json"))
             {
@@ -584,6 +585,15 @@ public class ServiceController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAsCompleted(int id)
     {
+        var repair = _context.Repairs.FindAsync(id);
+
+
+        if (repair == null)
+        {
+            return null;
+        }
+        
+        
         return await ChangeRepairStatus(id, RepairStatus.Completed);
     }
 
@@ -643,7 +653,6 @@ public class ServiceController : Controller
                 RepairType = originalRepair.RepairType,
                 Status = RepairStatus.Scheduled,
                 AdditionalNotes = originalRepair.AdditionalNotes,
-                WarrantyMonths = originalRepair.WarrantyMonths
             };
 
             _context.Repairs.Add(newRepair);
@@ -894,7 +903,6 @@ public class ServiceController : Controller
                 $"\"{repair.StartDate?.ToString("yyyy-MM-dd")}\"," +
                 $"\"{repair.CompletionDate?.ToString("yyyy-MM-dd")}\"," +
                 $"\"{repair.InvoiceNumber}\"," +
-                $"{repair.WarrantyMonths}," +
                 $"{repair.RepairParts.Count}");
         }
 
@@ -960,12 +968,6 @@ public class ServiceController : Controller
         {
             RepairType.Emergency => "Naprawa awaryjna",
             RepairType.Maintenance => "Przegląd okresowy",
-            RepairType.PartReplacement => "Wymiana części",
-            RepairType.BodyWork => "Naprawa karoserii",
-            RepairType.Engine => "Naprawa silnika",
-            RepairType.Brakes => "Naprawa układu hamulcowego",
-            RepairType.Suspension => "Naprawa zawieszenia",
-            RepairType.Electrical => "Naprawa elektryki",
             RepairType.Other => "Inne",
             _ => repairType.ToString()
         };
@@ -989,8 +991,7 @@ public class ServiceController : Controller
             RepairStatus.InProgress => "W trakcie",
             RepairStatus.Completed => "Zakończona",
             RepairStatus.Cancelled => "Anulowana",
-            RepairStatus.WaitingForParts => "Oczekuje na części",
-            RepairStatus.WaitingForPayment => "Oczekuje na płatność",
+            RepairStatus.WaitingForParts => "Oczekuje na części", 
             _ => status.ToString()
         };
     }
@@ -1012,9 +1013,6 @@ public class ServiceController : Controller
             PartAction.Replaced => "Wymieniono",
             PartAction.Repaired => "Naprawiono",
             PartAction.Inspected => "Sprawdzono",
-            PartAction.Cleaned => "Oczyszczono",
-            PartAction.Sealed => "Doszczelniono",
-            PartAction.Adjusted => "Wyregulowano",
             _ => action.ToString()
         };
     }

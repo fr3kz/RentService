@@ -264,7 +264,6 @@ Layout = "_Layout";
                             RentService.Models.RepairStatus.Scheduled => "status-scheduled",
                             RentService.Models.RepairStatus.Cancelled => "status-cancelled",
                             RentService.Models.RepairStatus.WaitingForParts => "status-waitingforparts",
-                            RentService.Models.RepairStatus.WaitingForPayment => "status-waitingforpayment",
                             _ => "status-scheduled"
                             };
 
@@ -275,7 +274,6 @@ Layout = "_Layout";
                             RentService.Models.RepairStatus.Scheduled => "Zaplanowana",
                             RentService.Models.RepairStatus.Cancelled => "Anulowana",
                             RentService.Models.RepairStatus.WaitingForParts => "Oczekuje na części",
-                            RentService.Models.RepairStatus.WaitingForPayment => "Oczekuje na płatność",
                             _ => "Nieznany"
                             };
                             }
@@ -396,16 +394,7 @@ Layout = "_Layout";
                             </div>
                             }
 
-                            @if (Model.WarrantyMonths.HasValue && Model.WarrantyMonths > 0)
-                            {
-                            <div class="info-item">
-                                    <span class="info-label">
-                                        <i class="fas fa-shield-alt mr-2 text-emerald-400"></i>
-                                        Gwarancja
-                                    </span>
-                                <span class="info-value text-emerald-400">@Model.WarrantyMonths miesięcy</span>
-                            </div>
-                            }
+                         
                         </div>
 
                         @if (!string.IsNullOrEmpty(Model.Description))
@@ -528,13 +517,7 @@ Layout = "_Layout";
                             </div>
                             }
 
-                            @if (Model.WarrantyMonths.HasValue && Model.WarrantyMonths > 0)
-                            {
-                            <div class="flex justify-between text-sm">
-                                <span>Gwarancja do:</span>
-                                <span>@DateTime.Now.AddMonths(Model.WarrantyMonths.Value).ToString("MM/yyyy")</span>
-                            </div>
-                            }
+                          
 
                             @if (!string.IsNullOrEmpty(Model.InvoiceNumber))
                             {

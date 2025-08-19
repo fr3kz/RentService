@@ -58,10 +58,6 @@ namespace RentService.Models
         [StringLength(50, ErrorMessage = "Numer faktury nie może przekraczać 50 znaków")]
         public string InvoiceNumber { get; set; }
 
-        // Gwarancja w miesiącach
-        [Range(0, 120, ErrorMessage = "Gwarancja musi być między 0 a 120 miesięcy")]
-        public int? WarrantyMonths { get; set; }
-
         // Relacja many-to-many z częściami, które były naprawiane/wymieniane
         public ICollection<RepairExploitationPart> RepairParts { get; set; } = new List<RepairExploitationPart>();
     }
@@ -79,8 +75,12 @@ namespace RentService.Models
         [EnumDataType(typeof(PartAction), ErrorMessage = "Wybierz prawidłową akcję")]
         public PartAction Action { get; set; }
 
-        [StringLength(200, ErrorMessage = "Uwagi o części nie mogą przekraczać 200 znaków")]
+        [StringLength(200, ErrorMessage = "Uwag" +
+                                          "`i o części nie mogą przekraczać 200 znaków")]
         public string PartNotes { get; set; }
+        
+        public DateTime NextServiceCheck { get; set; }
+        public int NextMillageCheck { get; set; }
     }
 
     public enum RepairType
@@ -93,21 +93,6 @@ namespace RentService.Models
         
         [Display(Name = "Wymiana części")]
         PartReplacement,
-        
-        [Display(Name = "Naprawa karoserii")]
-        BodyWork,
-        
-        [Display(Name = "Naprawa silnika")]
-        Engine,
-        
-        [Display(Name = "Naprawa układu hamulcowego")]
-        Brakes,
-        
-        [Display(Name = "Naprawa zawieszenia")]
-        Suspension,
-        
-        [Display(Name = "Naprawa elektryki")]
-        Electrical,
         
         [Display(Name = "Inne")]
         Other
@@ -144,9 +129,6 @@ namespace RentService.Models
         
         [Display(Name = "Oczekuje na części")]
         WaitingForParts,
-        
-        [Display(Name = "Oczekuje na płatność")]
-        WaitingForPayment
     }
 
     public enum PartAction
@@ -159,14 +141,5 @@ namespace RentService.Models
         
         [Display(Name = "Sprawdzono")]
         Inspected,
-        
-        [Display(Name = "Oczyszczono")]
-        Cleaned,
-        
-        [Display(Name = "Doszczelniono")]
-        Sealed,
-        
-        [Display(Name = "Wyregulowano")]
-        Adjusted
     }
 }
