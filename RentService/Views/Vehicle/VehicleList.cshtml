@@ -180,14 +180,14 @@
                             <p class="text-2xl font-semibold text-white">
                                 @if (Model != null && Model.Any())
                                 {
-                                    @(Math.Round(Model.Average(v => v.DailyRentalPrice), 0))
+                                    @(Math.Round(Model.Average(v => v.WeekRentalPrice), 0))
                                 }
                                 else
                                 {
                                     <text>0</text>
                                 }
                             </p>
-                            <p class="text-sm text-gray-400">zł/dzień</p>
+                            <p class="text-sm text-gray-400">zł/tydzień</p>
                         </div>
                     </div>
                 </div>
@@ -244,7 +244,7 @@
                              data-model="@vehicle.Model"
                              data-registration="@vehicle.RegistrationNumber"
                              data-color="@vehicle.Color"
-                             data-price="@vehicle.DailyRentalPrice"
+                             data-price="@vehicle.WeekRentalPrice"
                              data-available="@vehicle.IsAvailable.ToString().ToLower()">
                             <div class="flex flex-col items-center text-center">
                                 <div class="vehicle-placeholder mb-4">
@@ -260,7 +260,7 @@
                                 </span>
 
                                 <div class="price-tag mb-3">
-                                    @vehicle.DailyRentalPrice.ToString("C0") / dzień
+                                    @vehicle.WeekRentalPrice.ToString("C0") / dzień
                                 </div>
 
                                 <div class="w-full text-sm text-gray-300 space-y-2">

@@ -15,8 +15,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.Configure<RazorViewEngineOptions>(options =>
 {
-   // options.AreaViewLocationFormats.Add("/Area/{2}/Views/{1}/{0}.cshtml");
-    //options.AreaViewLocationFormats.Add("/Area/{2}/Views/Shared/{0}.cshtml");
     options.AreaViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
 });
 
@@ -26,7 +24,12 @@ builder.Services.AddIdentity<User, IdentityRole>()
 
 builder.Services.ConfigureApplicationCookie(options => {
     options.LoginPath = "/Users/Login";
-    options.AccessDeniedPath = "";
+    options.LogoutPath = "/Users/Logout";
+    options.AccessDeniedPath = "/Users/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(24);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
 builder.Services.AddAuthorization(options =>
@@ -34,6 +37,10 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
+    
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireClaim("IsAdmin", "True"));
 });
 builder.Services.AddControllersWithViews(options =>
 {
@@ -45,6 +52,7 @@ builder.Services.AddControllersWithViews(options =>
 
 var app = builder.Build();
 
+await SeedAdminUser(app);
 
 if (!app.Environment.IsDevelopment())
 {

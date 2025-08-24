@@ -506,12 +506,12 @@ public class VehicleController : Controller
 
             if (minPrice.HasValue)
             {
-                vehiclesQuery = vehiclesQuery.Where(v => v.DailyRentalPrice >= minPrice.Value);
+                vehiclesQuery = vehiclesQuery.Where(v => v.WeekRentalPrice >= minPrice.Value);
             }
 
             if (maxPrice.HasValue)
             {
-                vehiclesQuery = vehiclesQuery.Where(v => v.DailyRentalPrice <= maxPrice.Value);
+                vehiclesQuery = vehiclesQuery.Where(v => v.WeekRentalPrice <= maxPrice.Value);
             }
 
             var vehicles = await vehiclesQuery
@@ -540,7 +540,7 @@ public class VehicleController : Controller
                     id = v.ID,
                     model = v.Model,
                     registrationNumber = v.RegistrationNumber,
-                    dailyPrice = v.DailyRentalPrice,
+                    dailyPrice = v.WeekRentalPrice,
                     color = v.Color,
                     mileage = v.Mileage
                 })
@@ -601,15 +601,15 @@ public class VehicleController : Controller
         }
 
         // Validate daily rental price
-        if (vehicle.DailyRentalPrice <= 0)
+        if (vehicle.WeekRentalPrice <= 0)
         {
-            ModelState.AddModelError(nameof(vehicle.DailyRentalPrice), 
+            ModelState.AddModelError(nameof(vehicle.WeekRentalPrice), 
                 "Cena wynajmu musi być większa od 0.");
         }
 
-        if (vehicle.DailyRentalPrice > 10000)
+        if (vehicle.WeekRentalPrice > 10000)
         {
-            ModelState.AddModelError(nameof(vehicle.DailyRentalPrice), 
+            ModelState.AddModelError(nameof(vehicle.WeekRentalPrice), 
                 "Cena wynajmu nie może przekraczać 10,000 zł dziennie.");
         }
 

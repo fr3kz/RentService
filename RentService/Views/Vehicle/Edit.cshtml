@@ -366,11 +366,11 @@ Layout = "_Layout";
 
                     <div class="form-grid">
                         <div class="form-group">
-                            @Html.LabelFor(m => m.DailyRentalPrice, "Cena wynajmu dziennego", new { @class = "form-label required" })
+                            @Html.LabelFor(m => m.WeekRentalPrice, "Cena wynajmu dziennego", new { @class = "form-label required" })
                             <div class="price-input-container">
-                                @Html.TextBoxFor(m => m.DailyRentalPrice, new { @class = "form-input", @type = "number", min = "0", step = "0.01", placeholder = "0.00" })
+                                @Html.TextBoxFor(m => m.WeekRentalPrice, new { @class = "form-input", @type = "number", min = "0", step = "0.01", placeholder = "0.00" })
                             </div>
-                            @Html.ValidationMessageFor(m => m.DailyRentalPrice, "", new { @class = "form-error" })
+                            @Html.ValidationMessageFor(m => m.WeekRentalPrice, "", new { @class = "form-error" })
                             <div class="form-help">Cena za jeden dzień wynajmu w złotych</div>
                         </div>
 

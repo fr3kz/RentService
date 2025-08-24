@@ -667,11 +667,7 @@ Layout = "_Layout";
                                 Zobacz pojazd
                             </a>
 
-                            <button onclick="duplicateRepair(@Model.ID)"
-                                    class="action-button w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
-                                <i class="fas fa-copy mr-2"></i>
-                                Duplikuj naprawę
-                            </button>
+                         
 
                             <button onclick="deleteRepair(@Model.ID)"
                                     class="action-button w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
@@ -717,7 +713,7 @@ Layout = "_Layout";
     // Mark repair as completed
     window.markAsCompleted = function(repairId) {
         if (confirm('Czy na pewno chcesz oznączyć tę naprawę jako zakończoną?')) {
-            fetch(`@Url.Action("MarkAsCompleted", "Repair")/${repairId}`, {
+            fetch(`@Url.Action("MarkAsCompleted", "Service")/${repairId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

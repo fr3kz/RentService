@@ -172,8 +172,19 @@ public class ServiceController : Controller
                 }
 
                 Vehicle vehicle = await _context.Cars.FindAsync(repair.VehicleID);
+                var parts =  _context.ExploitationParts.Where(r => r.VehicleID == vehicle.ID);
                 repair.Vehicle = vehicle;
+                
+
+                foreach (var p in parts)
+                {
+                    p.CurrentKm = (int)(vehicle.Mileage - repair.MileageAtRepair);
+                    _context.ExploitationParts.Update(p);
+                }
+                
                 vehicle.Mileage = repair.MileageAtRepair;
+                
+                //update part milage1
 
                 _context.Repairs.Add(repair);
                 _context.Cars.Update(vehicle);
@@ -386,10 +397,9 @@ public class ServiceController : Controller
     // Dodawanie części do naprawy
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddPartToRepair(int repairId, int exploitationPartId, PartAction action, string partNotes)
+    public async Task<IActionResult> AddPartToRepair(int repairId, int exploitationPartId, PartAction action, string partNotes,DateTime? nextReplacementDate)
     {
-        try
-        {
+        try{  
             var repairExists = await _context.Repairs.AnyAsync(r => r.ID == repairId);
             if (!repairExists)
             {
@@ -398,8 +408,8 @@ public class ServiceController : Controller
                 return RedirectToAction(nameof(RepairsList));
             }
 
-            var partExists = await _context.ExploitationParts.AnyAsync(ep => ep.ID == exploitationPartId);
-            if (!partExists)
+            var exploitationPart = await _context.ExploitationParts.FirstOrDefaultAsync(ep => ep.ID == exploitationPartId);
+            if (exploitationPart == null)
             {
                 _logger.LogWarning($"Próba dodania nieistniejącej części ID: {exploitationPartId} do naprawy ID: {repairId}");
                 TempData["ErrorMessage"] = "Wybrana część nie została znaleziona.";
@@ -420,21 +430,59 @@ public class ServiceController : Controller
                 {
                     RepairID = repairId,
                     ExploitationPartID = exploitationPartId,
+                    ExploitationPart = exploitationPart,
                     Action = action,
                     PartNotes = string.IsNullOrWhiteSpace(partNotes) ? null : partNotes.Trim()
                 };
 
                 _context.RepairExploitationParts.Add(repairPart);
+
+                if (nextReplacementDate.HasValue)
+                {
+                    // Walidacja daty - nie może być z przeszłości
+                    if (nextReplacementDate.Value.Date < DateTime.Today)
+                    {
+                        _logger.LogWarning($"Próba ustawienia daty następnej wymiany z przeszłości: {nextReplacementDate.Value}");
+                        TempData["ErrorMessage"] = "Data następnej wymiany nie może być z przeszłości.";
+                        return RedirectToAction(nameof(ManageRepairParts), new { repairId });
+                    }
+
+                    // Ostrzeżenie dla bardzo odległych dat (ponad 5 lat)
+                    if (nextReplacementDate.Value.Date > DateTime.Today.AddYears(5))
+                    {
+                        _logger.LogWarning($"Ustawiono bardzo odległą datę następnej wymiany: {nextReplacementDate.Value} dla części ID: {exploitationPartId}");
+                    }
+
+                    //exploitationPart.NextReplacementDueDate = nextReplacementDate.Value;
+                    _context.ExploitationParts.Update(exploitationPart);
+
+                    _logger.LogInformation($"Zaktualizowano datę następnej wymiany części ID: {exploitationPartId} na: {nextReplacementDate.Value:yyyy-MM-dd}");
+                }
+
                 await _context.SaveChangesAsync();
 
+                var successMessage = nextReplacementDate.HasValue 
+                    ? $"Część została pomyślnie dodana do naprawy. Data następnej wymiany ustawiona na: {nextReplacementDate.Value:dd.MM.yyyy}."
+                    : "Część została pomyślnie dodana do naprawy.";
+
                 _logger.LogInformation($"Dodano część ID: {exploitationPartId} do naprawy ID: {repairId} z akcją: {action}");
-                TempData["SuccessMessage"] = "Część została pomyślnie dodana do naprawy.";
+                TempData["SuccessMessage"] = successMessage;
             }
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, $"Nieprawidłowe dane podczas dodawania części {exploitationPartId} do naprawy {repairId}");
+            TempData["ErrorMessage"] = "Podane dane są nieprawidłowe. Sprawdź wprowadzone wartości.";
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, $"Błąd bazy danych podczas dodawania części {exploitationPartId} do naprawy {repairId}");
+            TempData["ErrorMessage"] = "Wystąpił błąd podczas zapisywania do bazy danych.";
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Błąd podczas dodawania części {exploitationPartId} do naprawy {repairId}");
-            TempData["ErrorMessage"] = "Wystąpił błąd podczas dodawania części.";
+            _logger.LogError(ex, $"Nieoczekiwany błąd podczas dodawania części {exploitationPartId} do naprawy {repairId}");
+            TempData["ErrorMessage"] = "Wystąpił nieoczekiwany błąd podczas dodawania części.";
         }
 
         return RedirectToAction(nameof(ManageRepairParts), new { repairId });
@@ -491,6 +539,7 @@ public class ServiceController : Controller
                 TempData["ErrorMessage"] = "Nie znaleziono pojazdu.";
                 return RedirectToAction("VehicleList", "Vehicle");
             }
+
 
             _logger.LogInformation($"Wyświetlanie historii napraw dla pojazdu ID: {vehicleId}, liczba napraw: {vehicle.Repairs.Count}");
             return View(vehicle);
@@ -585,12 +634,32 @@ public class ServiceController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAsCompleted(int id)
     {
-        var repair = _context.Repairs.FindAsync(id);
+        var repair = await _context.Repairs.FindAsync(id);
 
-
+        
         if (repair == null)
         {
             return null;
+        }
+
+        var repiar_parts = _context.RepairExploitationParts.Where(r => r.RepairID == id);
+        var car_parts = _context.ExploitationParts.Where(r => r.Car == repair.Vehicle);
+
+        using (var transaction = await _context.Database.BeginTransactionAsync())
+        {
+            foreach (var p in repiar_parts)
+            {
+                var part = car_parts.FirstOrDefault(r => r.PartName == p.ExploitationPart.PartName);
+                if (part != null)
+                {
+                    part.NextReplacementDueDate = p.NextServiceCheck;
+                    await _context.SaveChangesAsync();
+
+                }
+
+            
+            }
+            await transaction.CommitAsync();
         }
         
         
@@ -625,63 +694,7 @@ public class ServiceController : Controller
         }
     }
 
-    // Duplikuj naprawę
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DuplicateRepair(int id)
-    {
-        try
-        {
-            var originalRepair = await _context.Repairs
-                .Include(r => r.RepairParts)
-                    .ThenInclude(rp => rp.ExploitationPart)
-                .FirstOrDefaultAsync(r => r.ID == id);
-
-            if (originalRepair == null)
-            {
-                return Json(new { success = false, message = "Naprawa nie została znaleziona." });
-            }
-
-            // Utwórz kopię naprawy
-            var newRepair = new Repair
-            {
-                VehicleID = originalRepair.VehicleID,
-                RepairDate = DateTime.Now.Date,
-                MileageAtRepair = originalRepair.MileageAtRepair,
-                Description = $"Kopia: {originalRepair.Description}",
-                Cost = originalRepair.Cost,
-                RepairType = originalRepair.RepairType,
-                Status = RepairStatus.Scheduled,
-                AdditionalNotes = originalRepair.AdditionalNotes,
-            };
-
-            _context.Repairs.Add(newRepair);
-            await _context.SaveChangesAsync();
-
-            // Skopiuj części (opcjonalnie)
-            foreach (var originalPart in originalRepair.RepairParts)
-            {
-                var newRepairPart = new RepairExploitationPart
-                {
-                    RepairID = newRepair.ID,
-                    ExploitationPartID = originalPart.ExploitationPartID,
-                    Action = originalPart.Action,
-                    PartNotes = originalPart.PartNotes
-                };
-                _context.RepairExploitationParts.Add(newRepairPart);
-            }
-
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation($"Zduplikowano naprawę ID: {id}, nowa naprawa ID: {newRepair.ID}");
-            return Json(new { success = true, newRepairId = newRepair.ID, message = "Naprawa została zduplikowana." });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Błąd podczas duplikowania naprawy ID: {id}");
-            return Json(new { success = false, message = "Wystąpił błąd podczas duplikowania naprawy." });
-        }
-    }
+    
 
     // Generuj raport PDF (placeholder)
     [HttpGet]

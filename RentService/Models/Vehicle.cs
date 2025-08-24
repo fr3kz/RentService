@@ -15,7 +15,7 @@ public class Vehicle
    public DateTime YearOfManufacture { get; set; }
    public string Color { get; set; }
    public string VIN { get; set; }
-   public decimal DailyRentalPrice { get; set; }
+   public decimal WeekRentalPrice { get; set; }
    public bool IsAvailable { get; set; }
    public float Mileage { get; set; }
    public string Notes { get; set; }
