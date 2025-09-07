@@ -43,7 +43,7 @@ namespace RentService.Models
         public RepairStatus Status { get; set; }
 
         [StringLength(500, ErrorMessage = "Dodatkowe uwagi nie mogą przekraczać 500 znaków")]
-        public string AdditionalNotes { get; set; }
+        public string? AdditionalNotes { get; set; }
 
         // Data rozpoczęcia naprawy (opcjonalna - może być różna od RepairDate)
         [DataType(DataType.Date)]
@@ -56,7 +56,7 @@ namespace RentService.Models
 
         // Numer faktury/rachunku
         [StringLength(50, ErrorMessage = "Numer faktury nie może przekraczać 50 znaków")]
-        public string InvoiceNumber { get; set; }
+        public string? InvoiceNumber { get; set; }
 
         // Relacja many-to-many z częściami, które były naprawiane/wymieniane
         public ICollection<RepairExploitationPart> RepairParts { get; set; } = new List<RepairExploitationPart>();

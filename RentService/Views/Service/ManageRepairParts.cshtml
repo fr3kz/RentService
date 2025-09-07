@@ -367,8 +367,13 @@ Layout = "_Layout";
                                     </div>
 
                                     <div class="flex items-center justify-between">
-                                        <span class="text-gray-400">Przebieg aktualny:</span>
-                                        <span class="text-yellow-400 font-medium">@repairPart.ExploitationPart.CurrentKm.ToString("N0") km</span>
+                                        <span class="text-gray-400">Przebieg pozostały:</span>
+                                        <span class="text-green-400 font-medium">
+         @{
+                                            var remaining = repairPart.ExploitationPart.TotalKm - repairPart.ExploitationPart.CurrentKm;
+                                            }
+                                            @(remaining > 0 ? remaining.ToString("N0") + " km" : remaining)
+    </span>
                                     </div>
 
                                     <div class="flex items-center justify-between">
@@ -450,6 +455,21 @@ Layout = "_Layout";
                                            min="@DateTime.Now.ToString("yyyy-MM-dd")"
                                            title="Wybierz datę planowanej następnej wymiany tej części" />
                                    
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">
+                                        <i class="fas fa-calendar-alt mr-2"></i>
+                                        Przebieg następnej wymiany
+                                    </label>
+                                    <input type="number"
+                                           name="nextReplacementMileage"
+                                           class="form-input w-full px-3 py-2"
+                                           min="0"
+                                           step="100"
+                                           placeholder="np. 120000"
+                                           title="Podaj przebieg (w km), przy którym planujesz następną wymianę" />
+
                                 </div>
 
                                 <div>
@@ -785,35 +805,7 @@ Layout = "_Layout";
         }
     });
 
-    // Search functionality for parts dropdown
-    function addSearchToSelect() {
-        const select = document.querySelector('select[name="exploitationPartId"]');
-        const wrapper = document.createElement('div');
-        wrapper.className = 'relative';
-
-        const searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.placeholder = 'Wyszukaj część...';
-        searchInput.className = 'form-input w-full px-3 py-2 mb-2';
-
-        select.parentNode.insertBefore(wrapper, select);
-        wrapper.appendChild(searchInput);
-        wrapper.appendChild(select);
-
-        const originalOptions = Array.from(select.options);
-
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            select.innerHTML = '';
-
-            originalOptions.forEach(option => {
-                if (option.text.toLowerCase().includes(searchTerm) || option.value === '') {
-                    select.appendChild(option.cloneNode(true));
-                }
-            });
-        });
-    }
-
+  
     // Initialize search functionality
     document.addEventListener('DOMContentLoaded', addSearchToSelect);
 

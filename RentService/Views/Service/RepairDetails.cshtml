@@ -738,7 +738,7 @@ Layout = "_Layout";
     // Reopen repair
     window.reopenRepair = function(repairId) {
         if (confirm('Czy na pewno chcesz ponownie otworzyć tę naprawę?')) {
-            fetch(`@Url.Action("ReopenRepair", "Repair")/${repairId}`, {
+            fetch(`@Url.Action("ReopenRepair", "Service")/${repairId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -754,37 +754,12 @@ Layout = "_Layout";
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('Wystąpił błąd podczas ponownego otwierania naprawy.');
+                    alert('Wystąpił błąd podczas ponownego otwierania naprawy.' + error.toString());
                 });
         }
     };
 
-    // Duplicate repair
-    window.duplicateRepair = function(repairId) {
-        if (confirm('Czy na pewno chcesz utworzyć kopię tej naprawy?')) {
-            fetch(`@Url.Action("DuplicateRepair", "Repair")/${repairId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = `@Url.Action("RepairDetails", "Repair")/${data.newRepairId}`;
-                    } else {
-                        alert('Błąd: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Wystąpił błąd podczas duplikowania naprawy.');
-                });
-        }
-    };
-
+  
     // Delete repair
     window.deleteRepair = function(repairId) {
         if (confirm('Czy na pewno chcesz usunąć tę naprawę? Ta operacja jest nieodwracalna!')) {
@@ -846,7 +821,7 @@ Layout = "_Layout";
             switch(e.key) {
                 case 'e':
                     e.preventDefault();
-                    window.location.href = '@Url.Action("RepairEdit", "Repair", new { id = Model.ID })';
+                    window.location.href = '@Url.Action("RepairEdit", "Service", new { id = Model.ID })';
                     break;
                 case 'p':
                     e.preventDefault();
@@ -854,7 +829,7 @@ Layout = "_Layout";
                     break;
                 case 'b':
                     e.preventDefault();
-                    window.location.href = '@Url.Action("RepairList", "Repair")';
+                    window.location.href = '@Url.Action("RepairsList", "Service")';
                     break;
             }
         }

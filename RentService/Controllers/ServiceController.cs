@@ -166,26 +166,32 @@ public class ServiceController : Controller
                     return View(repair);
                 }
 
-                if (repair.Status == default)
+               if (repair.Status == default)
                 {
                     repair.Status = RepairStatus.Scheduled;
                 }
 
                 Vehicle vehicle = await _context.Cars.FindAsync(repair.VehicleID);
-                var parts =  _context.ExploitationParts.Where(r => r.VehicleID == vehicle.ID);
-                repair.Vehicle = vehicle;
                 
-
+                if(vehicle == null)
+                {
+                    ModelState.AddModelError("VehicleID", "Wybrany pojazd nie istnieje.");
+                    return View(repair);
+                }
+                repair.Vehicle = vehicle;
+                var parts =  _context.ExploitationParts.Where(r => r.VehicleID == vehicle.ID);
+                
                 foreach (var p in parts)
                 {
-                    p.CurrentKm = (int)(vehicle.Mileage - repair.MileageAtRepair);
+                    p.CurrentKm = (int)(-vehicle.Mileage + repair.MileageAtRepair);
+                    //Todo: powiadomienie jezeli wartosc jest na minusie
                     _context.ExploitationParts.Update(p);
                 }
                 
                 vehicle.Mileage = repair.MileageAtRepair;
                 
-                //update part milage1
-
+                //Todo: dodanie historii przebiegu
+                
                 _context.Repairs.Add(repair);
                 _context.Cars.Update(vehicle);
                 await _context.SaveChangesAsync();
@@ -397,7 +403,7 @@ public class ServiceController : Controller
     // Dodawanie części do naprawy
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddPartToRepair(int repairId, int exploitationPartId, PartAction action, string partNotes,DateTime? nextReplacementDate)
+    public async Task<IActionResult> AddPartToRepair(int repairId, int exploitationPartId, PartAction action, string partNotes,DateTime? nextReplacementDate,int? nextReplacementMileage)
     {
         try{  
             var repairExists = await _context.Repairs.AnyAsync(r => r.ID == repairId);
@@ -433,32 +439,22 @@ public class ServiceController : Controller
                     ExploitationPart = exploitationPart,
                     Action = action,
                     PartNotes = string.IsNullOrWhiteSpace(partNotes) ? null : partNotes.Trim()
+                   
                 };
-
-                _context.RepairExploitationParts.Add(repairPart);
-
+                
                 if (nextReplacementDate.HasValue)
                 {
-                    // Walidacja daty - nie może być z przeszłości
-                    if (nextReplacementDate.Value.Date < DateTime.Today)
-                    {
-                        _logger.LogWarning($"Próba ustawienia daty następnej wymiany z przeszłości: {nextReplacementDate.Value}");
-                        TempData["ErrorMessage"] = "Data następnej wymiany nie może być z przeszłości.";
-                        return RedirectToAction(nameof(ManageRepairParts), new { repairId });
-                    }
-
-                    // Ostrzeżenie dla bardzo odległych dat (ponad 5 lat)
-                    if (nextReplacementDate.Value.Date > DateTime.Today.AddYears(5))
-                    {
-                        _logger.LogWarning($"Ustawiono bardzo odległą datę następnej wymiany: {nextReplacementDate.Value} dla części ID: {exploitationPartId}");
-                    }
-
-                    //exploitationPart.NextReplacementDueDate = nextReplacementDate.Value;
-                    _context.ExploitationParts.Update(exploitationPart);
-
-                    _logger.LogInformation($"Zaktualizowano datę następnej wymiany części ID: {exploitationPartId} na: {nextReplacementDate.Value:yyyy-MM-dd}");
+                    repairPart.NextServiceCheck = nextReplacementDate.Value;
+                    _logger.LogInformation($"Ustawiono datę następnej wymiany części ID: {exploitationPartId} na: {nextReplacementDate.Value:yyyy-MM-dd}");
                 }
 
+                if (nextReplacementMileage.HasValue)
+                {
+                    repairPart.NextMillageCheck = nextReplacementMileage.Value;
+                    _logger.LogInformation($"Ustawiono przebieg następnej wymiany części ID: {exploitationPartId} na: {nextReplacementMileage.Value}");
+                }
+
+                _context.RepairExploitationParts.Add(repairPart);
                 await _context.SaveChangesAsync();
 
                 var successMessage = nextReplacementDate.HasValue 
@@ -643,19 +639,14 @@ public class ServiceController : Controller
         }
 
         var repiar_parts = _context.RepairExploitationParts.Where(r => r.RepairID == id);
-        var car_parts = _context.ExploitationParts.Where(r => r.Car == repair.Vehicle);
-
         using (var transaction = await _context.Database.BeginTransactionAsync())
         {
             foreach (var p in repiar_parts)
             {
-                var part = car_parts.FirstOrDefault(r => r.PartName == p.ExploitationPart.PartName);
-                if (part != null)
-                {
-                    part.NextReplacementDueDate = p.NextServiceCheck;
-                    await _context.SaveChangesAsync();
-
-                }
+                    var epart = await _context.ExploitationParts.FindAsync(p.ExploitationPartID);
+                    epart.NextReplacementDueDate = p.NextServiceCheck;
+                    epart.TotalKm = p.NextMillageCheck;
+                
 
             
             }

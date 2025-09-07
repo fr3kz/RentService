@@ -1,0 +1,697 @@
+@model RentService.Models.Repair
+
+@{
+ViewData["Title"] = "Edytuj naprawę";
+Layout = "_Layout";
+}
+
+<div class="flex h-screen overflow-hidden -mx-4 -my-8">
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <nav class="ml-4 flex items-center space-x-2 text-sm text-gray-400">
+                        <a href="@Url.Action("RepairsList", "Service")" class="hover:text-white transition-colors">
+                            <i class="fas fa-wrench mr-1"></i>
+                            Naprawy
+                        </a>
+                        <i class="fas fa-chevron-right text-xs"></i>
+                        <a href="@Url.Action("RepairDetail", "Service", new { id = Model.ID })" class="hover:text-white transition-colors">
+                            Szczegóły
+                        </a>
+                        <i class="fas fa-chevron-right text-xs"></i>
+                        <span class="text-white">Edytuj naprawę</span>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="@Url.Action("RepairDetails", "Service", new { id = Model.ID })" 
+                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center">
+                        <i class="fas fa-eye mr-2"></i>
+                        Zobacz szczegóły
+                    </a>
+                    <button class="text-gray-400 hover:text-white relative">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">3</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+            <div class="max-w-4xl mx-auto">
+
+                <!-- Success/Error Messages -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                <div class="bg-green-900/20 border border-green-600/30 text-green-300 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    @TempData["SuccessMessage"]
+                </div>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                <div class="bg-red-900/20 border border-red-600/30 text-red-300 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    @TempData["ErrorMessage"]
+                </div>
+                }
+
+                @if (TempData["WarningMessage"] != null)
+                {
+                <div class="bg-yellow-900/20 border border-yellow-600/30 text-yellow-300 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    @TempData["WarningMessage"]
+                </div>
+                }
+
+                <!-- Page Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Edytuj naprawę</h1>
+                    <div class="flex flex-wrap items-center gap-4 text-gray-400">
+                        <span class="flex items-center">
+                            <i class="fas fa-car mr-2"></i>
+                            @Model.Vehicle?.Model - @Model.Vehicle?.RegistrationNumber
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-calendar mr-2"></i>
+                            Naprawa z @Model.RepairDate.ToString("dd.MM.yyyy")
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-hashtag mr-2"></i>
+                            ID: @Model.ID
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Current Status Info -->
+                <div class="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4 mb-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+                            <span class="text-blue-300 font-medium">Aktualny status naprawy:</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4">
+                            @{
+                            var statusClass = Model.Status switch
+                            {
+                            RentService.Models.RepairStatus.Completed => "bg-green-600",
+                            RentService.Models.RepairStatus.InProgress => "bg-blue-600",
+                            RentService.Models.RepairStatus.Scheduled => "bg-yellow-600",
+                            RentService.Models.RepairStatus.Cancelled => "bg-red-600",
+                            RentService.Models.RepairStatus.WaitingForParts => "bg-purple-600",
+                            _ => "bg-gray-600"
+                            };
+
+                            var statusText = Model.Status switch
+                            {
+                            RentService.Models.RepairStatus.Completed => "Zakończona",
+                            RentService.Models.RepairStatus.InProgress => "W trakcie",
+                            RentService.Models.RepairStatus.Scheduled => "Zaplanowana",
+                            RentService.Models.RepairStatus.Cancelled => "Anulowana",
+                            RentService.Models.RepairStatus.WaitingForParts => "Oczekuje na części",
+                            _ => "Nieznany"
+                            };
+                            }
+                            <span class="@statusClass text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                                <i class="fas fa-circle text-xs mr-2"></i>
+                                @statusText
+                            </span>
+                            <span class="text-blue-300">
+                                Koszt: <span class="font-bold">@Model.Cost.ToString("C")</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validation Summary -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                <div class="bg-red-900/20 border border-red-600/30 text-red-300 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold mb-2 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Wystąpiły błędy walidacji:
+                    </h4>
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                        <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+                }
+
+                <!-- Form -->
+                <form asp-action="RepairEdit" method="post" class="space-y-8">
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.ID)
+
+                    <!-- Vehicle Selection Section -->
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center border-b border-gray-700 pb-3">
+                            <i class="fas fa-car mr-3 text-red-400"></i>
+                            Pojazd i podstawowe informacje
+                        </h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label asp-for="VehicleID" class="block text-sm font-medium text-gray-300">
+                                    Pojazd <span class="text-red-400">*</span>
+                                </label>
+                                <select asp-for="VehicleID" asp-items="ViewBag.Vehicles" 
+                                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">-- Wybierz pojazd --</option>
+                                </select>
+                                <span asp-validation-for="VehicleID" class="text-red-400 text-sm"></span>
+                                <p class="text-gray-500 text-sm">Zmiana pojazdu może wpłynąć na powiązane części</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label asp-for="RepairDate" class="block text-sm font-medium text-gray-300">
+                                    Data naprawy <span class="text-red-400">*</span>
+                                </label>
+                                <input asp-for="RepairDate" type="date" 
+                                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                       id="repairDateInput" />
+                                <span asp-validation-for="RepairDate" class="text-red-400 text-sm"></span>
+                                <p class="text-gray-500 text-sm">Data wykonania naprawy</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label asp-for="MileageAtRepair" class="block text-sm font-medium text-gray-300">
+                                    Przebieg w momencie naprawy <span class="text-red-400">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input asp-for="MileageAtRepair" type="number" min="0" 
+                                           class="w-full px-3 py-2 pr-12 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                           placeholder="0" />
+                                    <span class="absolute right-3 top-2 text-gray-400 pointer-events-none">km</span>
+                                </div>
+                                <span asp-validation-for="MileageAtRepair" class="text-red-400 text-sm"></span>
+                                <p class="text-gray-500 text-sm">Aktualny przebieg pojazdu w kilometrach</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label asp-for="Cost" class="block text-sm font-medium text-gray-300">
+                                    Koszt naprawy <span class="text-red-400">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input asp-for="Cost" type="number" step="0.01" min="0" 
+                                           class="w-full px-3 py-2 pr-12 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                           placeholder="0.00" />
+                                    <span class="absolute right-3 top-2 text-gray-400 pointer-events-none">zł</span>
+                                </div>
+                                <span asp-validation-for="Cost" class="text-red-400 text-sm"></span>
+                                <p class="text-gray-500 text-sm">Całkowity koszt naprawy w złotych</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Repair Details Section -->
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center border-b border-gray-700 pb-3">
+                            <i class="fas fa-tools mr-3 text-blue-400"></i>
+                            Szczegóły naprawy
+                        </h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="space-y-2">
+                                <label asp-for="RepairType" class="block text-sm font-medium text-gray-300">
+                                    Typ naprawy <span class="text-red-400">*</span>
+                                </label>
+                                <select asp-for="RepairType" asp-items="ViewBag.RepairTypes" 
+                                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">-- Wybierz typ --</option>
+                                </select>
+                                <span asp-validation-for="RepairType" class="text-red-400 text-sm"></span>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label asp-for="Status" class="block text-sm font-medium text-gray-300">
+                                    Status <span class="text-red-400">*</span>
+                                </label>
+                                <select asp-for="Status" asp-items="ViewBag.RepairStatuses" 
+                                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        id="statusSelect">
+                                    <option value="">-- Wybierz status --</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-red-400 text-sm"></span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label asp-for="Description" class="block text-sm font-medium text-gray-300">
+                                Opis naprawy <span class="text-red-400">*</span>
+                            </label>
+                            <textarea asp-for="Description" rows="4" 
+                                      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                                      placeholder="Szczegółowy opis wykonanych prac, zastąpionych części, problemów..."></textarea>
+                            <span asp-validation-for="Description" class="text-red-400 text-sm"></span>
+                            <p class="text-gray-500 text-sm" id="descriptionHelp">Dokładny opis wykonanych czynności (maksymalnie 1000 znaków)</p>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Section -->
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                        <h2 class="text-xl font-semibold text-white mb-6 flex items-center border-b border-gray-700 pb-3">
+                            <i class="fas fa-calendar mr-3 text-purple-400"></i>
+                            Harmonogram i dokumentacja
+                        </h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label asp-for="StartDate" class="block text-sm font-medium text-gray-300">
+                                    Data rozpoczęcia
+                                </label>
+                                <input asp-for="StartDate" type="date" 
+                                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                       id="startDateInput" />
+                                <span asp-validation-for="StartDate" class="text-red-400 text-sm"></span>
+                                <p class="text-gray-500 text-sm">Kiedy rozpoczęto prace (opcjonalne)</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label asp-for="CompletionDate" class="block text-sm font-medium text-gray-300">
+                                    Data zakończenia
+                                </label>
+                                <input asp-for="CompletionDate" type="date" 
+                                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                       id="completionDateInput" />
+                                <span asp-validation-for="CompletionDate" class="text-red-400 text-sm"></span>
+                                <p class="text-gray-500 text-sm">Kiedy zakończono prace (opcjonalne)</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label asp-for="InvoiceNumber" class="block text-sm font-medium text-gray-300">
+                                    Numer faktury
+                                </label>
+                                <input asp-for="InvoiceNumber" type="text" 
+                                       class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                       placeholder="np. FV/2025/001" />
+                                <span asp-validation-for="InvoiceNumber" class="text-red-400 text-sm"></span>
+                                <p class="text-gray-500 text-sm">Numer faktury za naprawę (opcjonalne)</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-300">
+                                    Części eksploatacyjne
+                                </label>
+                                <div class="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-300 flex items-center justify-between">
+                                    <span>@Model.RepairParts.Count części przypisanych</span>
+                                    <a href="@Url.Action("ManageRepairParts", "Service", new { repairId = Model.ID })" 
+                                       class="text-blue-400 hover:text-blue-300 text-sm">
+                                        Zarządzaj <i class="fas fa-external-link-alt ml-1"></i>
+                                    </a>
+                                </div>
+                                <p class="text-gray-500 text-sm">Kliknij "Zarządzaj" aby edytować części</p>
+                            </div>
+
+                            <div class="md:col-span-2 space-y-2">
+                                <label asp-for="AdditionalNotes" class="block text-sm font-medium text-gray-300">
+                                    Dodatkowe uwagi
+                                </label>
+                                <textarea asp-for="AdditionalNotes" rows="3" 
+                                          class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+                                          placeholder="Dodatkowe informacje, uwagi, zalecenia..."></textarea>
+                                <span asp-validation-for="AdditionalNotes" class="text-red-400 text-sm"></span>
+                                <p class="text-gray-500 text-sm" id="notesHelp">Opcjonalne uwagi dotyczące naprawy (maksymalnie 500 znaków)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t border-gray-700">
+                        <a href="@Url.Action("RepairDetail", "Service", new { id = Model.ID })" 
+                           class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors inline-flex items-center justify-center">
+                            <i class="fas fa-times mr-2"></i>
+                            Anuluj
+                        </a>
+                        <a href="@Url.Action("RepairsList", "Service")" 
+                           class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors inline-flex items-center justify-center">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Powrót do listy
+                        </a>
+                        <button type="submit" 
+                                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors inline-flex items-center justify-center" 
+                                id="submitBtn">
+                            <i class="fas fa-save mr-2"></i>
+                            Zapisz zmiany
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('w-16');
+            sidebar.classList.toggle('w-64');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status change handler
+        const statusSelect = document.querySelector('#statusSelect');
+        const completionDateInput = document.querySelector('#completionDateInput');
+        const startDateInput = document.querySelector('#startDateInput');
+        
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                const status = this.value;
+                
+                // Auto-set completion date when marking as completed
+                if (status === 'Completed' && !completionDateInput.value) {
+                    const today = new Date().toISOString().split('T')[0];
+                    completionDateInput.value = today;
+                }
+                
+                // Auto-set start date when marking as in progress
+                if (status === 'InProgress' && !startDateInput.value) {
+                    const today = new Date().toISOString().split('T')[0];
+                    startDateInput.value = today;
+                }
+            });
+        }
+
+        // Date validation
+        function validateDates() {
+            const repairDate = document.querySelector('#repairDateInput').value;
+            const startDate = startDateInput?.value;
+            const completionDate = completionDateInput?.value;
+
+            // Clear previous errors
+            [startDateInput, completionDateInput].forEach(input => {
+                if (input) input.classList.remove('border-red-500');
+            });
+
+            let isValid = true;
+
+            // Start date cannot be before repair date
+            if (startDate && repairDate && new Date(startDate) < new Date(repairDate)) {
+                if (startDateInput) startDateInput.classList.add('border-red-500');
+                isValid = false;
+            }
+
+            // Completion date cannot be before start date
+            if (startDate && completionDate && new Date(completionDate) < new Date(startDate)) {
+                if (completionDateInput) completionDateInput.classList.add('border-red-500');
+                isValid = false;
+            }
+
+            // Completion date cannot be before repair date
+            if (completionDate && repairDate && new Date(completionDate) < new Date(repairDate)) {
+                if (completionDateInput) completionDateInput.classList.add('border-red-500');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        [startDateInput, completionDateInput, document.querySelector('#repairDateInput')].forEach(input => {
+            if (input) {
+                input.addEventListener('change', validateDates);
+            }
+        });
+
+        // Character counters
+        const descriptionTextarea = document.querySelector('#Description');
+        if (descriptionTextarea) {
+            const maxLength = 1000;
+            const helpText = document.querySelector('#descriptionHelp');
+
+            function updateDescriptionCounter() {
+                const remaining = maxLength - descriptionTextarea.value.length;
+                if (helpText) {
+                    helpText.textContent = `Dokładny opis wykonanych czynności (pozostało ${remaining} znaków)`;
+                }
+
+                if (remaining < 0) {
+                    descriptionTextarea.classList.add('border-red-500');
+                    if (helpText) helpText.classList.add('text-red-400');
+                } else {
+                    descriptionTextarea.classList.remove('border-red-500');
+                    if (helpText) helpText.classList.remove('text-red-400');
+                }
+            }
+
+            descriptionTextarea.addEventListener('input', updateDescriptionCounter);
+            updateDescriptionCounter();
+        }
+
+        const notesTextarea = document.querySelector('#AdditionalNotes');
+        if (notesTextarea) {
+            const maxLength = 500;
+            const helpText = document.querySelector('#notesHelp');
+
+            function updateNotesCounter() {
+                const remaining = maxLength - notesTextarea.value.length;
+                if (helpText) {
+                    helpText.textContent = `Opcjonalne uwagi dotyczące naprawy (pozostało ${remaining} znaków)`;
+                }
+
+                if (remaining < 0) {
+                    notesTextarea.classList.add('border-red-500');
+                    if (helpText) helpText.classList.add('text-red-400');
+                } else {
+                    notesTextarea.classList.remove('border-red-500');
+                    if (helpText) helpText.classList.remove('text-red-400');
+                }
+            }
+
+            notesTextarea.addEventListener('input', updateNotesCounter);
+            updateNotesCounter();
+        }
+
+        // Track changes for unsaved warning
+        const form = document.querySelector('form');
+        const formElements = form.querySelectorAll('input, select, textarea');
+        const initialValues = {};
+        
+        // Store initial values
+        formElements.forEach(element => {
+            if (element.type === 'checkbox' || element.type === 'radio') {
+                initialValues[element.name] = element.checked;
+            } else {
+                initialValues[element.name] = element.value;
+            }
+        });
+
+        let hasChanges = false;
+        
+        function checkForChanges() {
+            hasChanges = false;
+            formElements.forEach(element => {
+                let currentValue;
+                if (element.type === 'checkbox' || element.type === 'radio') {
+                    currentValue = element.checked;
+                } else {
+                    currentValue = element.value;
+                }
+                
+                if (initialValues[element.name] !== currentValue) {
+                    hasChanges = true;
+                }
+            });
+        }
+
+        // Add change listeners
+        formElements.forEach(element => {
+            element.addEventListener('change', checkForChanges);
+            element.addEventListener('input', checkForChanges);
+        });
+
+        // Warn before leaving if there are unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            checkForChanges();
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = 'Masz niezapisane zmiany. Czy na pewno chcesz opuścić stronę?';
+                return e.returnValue;
+            }
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', function(e) {
+            // Validate dates before submission
+            if (!validateDates()) {
+                e.preventDefault();
+                alert('Proszę poprawić błędy w datach przed zapisaniem.');
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Zapisywanie...';
+                submitBtn.disabled = true;
+            }
+
+            // Remove beforeunload warning since we're submitting
+            hasChanges = false;
+        });
+
+        // Vehicle change warning
+        const vehicleSelect = document.querySelector('#VehicleID');
+        const originalVehicleId = vehicleSelect ? vehicleSelect.value : '';
+        
+        if (vehicleSelect) {
+            vehicleSelect.addEventListener('change', function() {
+                if (this.value !== originalVehicleId && this.value !== '') {
+                    if (!confirm('Zmiana pojazdu może wpłynąć na powiązane części eksploatacyjne. Czy na pewno chcesz kontynuować?')) {
+                        this.value = originalVehicleId;
+                    }
+                }
+            });
+        }
+
+        // Real-time validation feedback
+        document.querySelectorAll('input, select, textarea').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    this.classList.add('border-red-500');
+                } else {
+                    this.classList.remove('border-red-500');
+                }
+            });
+
+            input.addEventListener('input', function() {
+                if (this.classList.contains('border-red-500') && this.value.trim()) {
+                    this.classList.remove('border-red-500');
+                }
+            });
+        });
+
+        // Cost validation
+        const costInput = document.querySelector('#Cost');
+        if (costInput) {
+            costInput.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (this.value && (isNaN(value) || value <= 0)) {
+                    this.classList.add('border-red-500');
+                } else {
+                    this.classList.remove('border-red-500');
+                }
+            });
+        }
+
+        // Mileage validation
+        const mileageInput = document.querySelector('#MileageAtRepair');
+        if (mileageInput) {
+            mileageInput.addEventListener('input', function() {
+                const value = parseInt(this.value);
+                if (this.value && (isNaN(value) || value < 0)) {
+                    this.classList.add('border-red-500');
+                } else {
+                    this.classList.remove('border-red-500');
+                }
+            });
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S to save
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            document.querySelector('form').submit();
+        }
+
+        // Escape to cancel (with confirmation if there are changes)
+        if (e.key === 'Escape') {
+            const form = document.querySelector('form');
+            const formElements = form.querySelectorAll('input, select, textarea');
+            let hasChanges = false;
+
+            // Quick check for changes
+            formElements.forEach(element => {
+                if (element.type === 'checkbox' || element.type === 'radio') {
+                    if (element.defaultChecked !== element.checked) {
+                        hasChanges = true;
+                    }
+                } else {
+                    if (element.defaultValue !== element.value) {
+                        hasChanges = true;
+                    }
+                }
+            });
+
+            if (!hasChanges || confirm('Czy na pewno chcesz anulować? Niezapisane zmiany zostaną utracone.')) {
+                window.location.href = '@Url.Action("RepairDetail", "Service", new { id = Model.ID })';
+            }
+        }
+    });
+
+    // Auto-hide alerts after 5 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.bg-green-900\\/20, .bg-red-900\\/20, .bg-yellow-900\\/20');
+        alerts.forEach(alert => {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => {
+                alert.remove();
+            }, 500);
+        });
+    }, 5000);
+
+    // Add floating save indicator
+    function createSaveIndicator() {
+        const indicator = document.createElement('div');
+        indicator.id = 'save-indicator';
+        indicator.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 z-50';
+        indicator.innerHTML = '<i class="fas fa-save mr-2"></i>Ctrl+S aby zapisać';
+        document.body.appendChild(indicator);
+
+        let showTimeout;
+        
+        // Show indicator when there are changes
+        const form = document.querySelector('form');
+        function showIndicator() {
+            clearTimeout(showTimeout);
+            indicator.style.opacity = '1';
+            showTimeout = setTimeout(() => {
+                indicator.style.opacity = '0';
+            }, 3000);
+        }
+
+        form.addEventListener('input', showIndicator);
+        form.addEventListener('change', showIndicator);
+
+        // Hide indicator after form submission
+        form.addEventListener('submit', function() {
+            indicator.style.opacity = '0';
+        });
+    }
+
+    // Initialize save indicator
+    document.addEventListener('DOMContentLoaded', createSaveIndicator);
+
+    // Add animation to form sections on load
+    window.addEventListener('load', function() {
+        const sections = document.querySelectorAll('.bg-gray-800');
+        sections.forEach((section, index) => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                section.style.transition = 'all 0.5s ease';
+                section.style.opacity = '1';
+                section.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });</script>}
