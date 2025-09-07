@@ -57,6 +57,12 @@ builder.Services.AddCoreAdmin();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();  // Tworzy wszystkie tabele jeśli nie istnieją
+}
+
 await SeedAdminUser(app);
 
 if (!app.Environment.IsDevelopment())
@@ -85,6 +91,7 @@ static async Task SeedAdminUser(IHost app)
 {
     using var scope = app.Services.CreateScope();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    
 
     string email = "tektmap1@gmail.com";
     string password = "Admin1234!.";
