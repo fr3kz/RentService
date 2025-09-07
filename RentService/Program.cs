@@ -10,7 +10,9 @@ using RentService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlite("Data Source=rentservice.db")
+      //  options.UseSqlite("Data Source=rentservice.db")
+      options.UseSqlite("Data Source=/var/www/RentService/RentService/rentservice.db")
+
 );
 
 builder.Services.Configure<RazorViewEngineOptions>(options =>
@@ -115,3 +117,13 @@ static async Task SeedAdminUser(IHost app)
         Console.WriteLine("ℹ️ Admin user already exists.");
     }
 }
+/*
+ * sudo systemctl daemon-reload
+sudo systemctl enable rentservice
+sudo systemctl start rentservice
+sudo systemctl status rentservice
+
+sudo mv /var/www/RentService/RentService/rentservice.db /var/www/RentService/RentService/out/
+
+
+*/
