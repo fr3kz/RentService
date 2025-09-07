@@ -1,39 +1,120 @@
 ﻿@{
-ViewData["Title"] = "Dashboard";
+ViewData["Title"] = "Dashboard - RentService";
 Layout = "_Layout";
 }
 
 @section Head {
-
 <style>
     .sidebar-collapsed {
         width: 4rem;
+    }
+
+    .metric-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .activity-item {
+        transition: background-color 0.2s ease;
+    }
+
+    .activity-item:hover {
+        background-color: rgba(75, 85, 99, 0.1);
+    }
+
+    .vehicle-item {
+        transition: all 0.2s ease;
+    }
+
+    .vehicle-item:hover {
+        background-color: rgba(75, 85, 99, 0.1);
+        border-left: 4px solid #3b82f6;
+    }
+
+    .status-available {
+        color: #10b981;
+        background-color: rgba(16, 185, 129, 0.1);
+    }
+
+    .status-rented {
+        color: #f59e0b;
+        background-color: rgba(245, 158, 11, 0.1);
+    }
+
+    .status-maintenance {
+        color: #ef4444;
+        background-color: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Chart container styling */
+    .chart-container {
+        position: relative;
+        height: 256px;
+        width: 100%;
+    }
+
+    .chart-container canvas {
+        max-height: 256px !important;
+    }
+
+    /* Prevent chart overflow */
+    #vehicleStatusChart, #repairCostChart {
+        max-height: 256px !important;
+        width: 100% !important;
+    }
+
+    /* Scrollbar styling for webkit browsers */
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-track {
+        background: #374151;
+        border-radius: 3px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #6b7280;
+        border-radius: 3px;
+    }
+
+    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
     }
 </style>
 }
 
 <div class="flex h-screen overflow-hidden -mx-4 -my-8">
-
     @await Html.PartialAsync("_Sidebar")
-
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Top Bar -->
-        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4">
+        <header class="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg border-b border-gray-700 px-6 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none">
+                    <button id="toggle-sidebar" class="text-gray-400 hover:text-white focus:outline-none transition-colors">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
-                    <h1 class="ml-4 text-2xl font-semibold text-white">Dashboard</h1>
+                    <h1 class="ml-4 text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                        RentService Dashboard
+                    </h1>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button class="text-gray-400 hover:text-white relative">
+                    <div class="text-sm text-gray-300">
+                        <span>Dzisiaj: </span>
+                        <span id="current-date" class="font-semibold text-blue-400"></span>
+                    </div>
+                    <button class="text-gray-400 hover:text-white relative transition-colors">
                         <i class="fas fa-bell text-xl"></i>
-                        <span class="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">3</span>
+                        <span class="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full animate-pulse" id="notification-count">0</span>
                     </button>
-                    <button class="text-gray-400 hover:text-white">
+                    <button class="text-gray-400 hover:text-white transition-colors">
                         <i class="fas fa-search text-xl"></i>
                     </button>
                 </div>
@@ -42,56 +123,86 @@ Layout = "_Layout";
 
         <!-- Main Content Area -->
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+            <!-- Quick Actions -->
+            <div class="mb-6">
+                <div class="flex flex-wrap gap-3">
+                    <a href="@Url.Action("VehicleAdd","Vehicle")" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-plus mr-2"></i>Dodaj pojazd
+                    </a>
+                    <a href="@Url.Action("EmployeeAdd","Employe")" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-user-plus mr-2"></i>Nowy pracownik
+                    </a>
+                    <a href="@Url.Action("RepairAdd","Service")" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-wrench mr-2"></i>Dodaj naprawę
+                    </a>
+                    <a href="@Url.Action("VehicleList","Vehicle")" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-list mr-2"></i>Zarządzaj flotą
+                    </a>
+                </div>
+            </div>
+
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                <!-- Total Vehicles -->
+                <div class="metric-card bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
                     <div class="flex items-center">
                         <div class="p-3 rounded-full bg-blue-600/20 text-blue-400">
-                            <i class="fas fa-users text-2xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-400">Użytkownicy</p>
-                            <p class="text-2xl font-semibold text-white">2,847</p>
-                            <p class="text-sm text-green-400">↑ 12%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-green-600/20 text-green-400">
-                            <i class="fas fa-dollar-sign text-2xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-400">Przychody</p>
-                            <p class="text-2xl font-semibold text-white">52,847 zł</p>
-                            <p class="text-sm text-green-400">↑ 8%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-yellow-600/20 text-yellow-400">
                             <i class="fas fa-car text-2xl"></i>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-400">Aktywne wynajmy</p>
-                            <p class="text-2xl font-semibold text-white">234</p>
-                            <p class="text-sm text-red-400">↓ 3%</p>
+                        <div class="ml-4 flex-1">
+                            <p class="text-sm font-medium text-gray-400">Całkowita flota</p>
+                            <p class="text-2xl font-bold text-white" id="total-vehicles">@(ViewBag.TotalCars ?? 0)</p>
+                            <p class="text-sm text-blue-400 flex items-center">
+                                <i class="fas fa-info-circle mr-1"></i>Pojazdy w systemie
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
+                <!-- Available Vehicles -->
+                <div class="metric-card bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-600/20 text-green-400">
+                            <i class="fas fa-check-circle text-2xl"></i>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <p class="text-sm font-medium text-gray-400">Dostępne pojazdy</p>
+                            <p class="text-2xl font-bold text-white" id="available-vehicles">@(ViewBag.AvailableCars ?? 0)</p>
+                            <p class="text-sm text-green-400 flex items-center">
+                                <i class="fas fa-arrow-up mr-1"></i>Gotowe do wynajmu
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vehicles in Service -->
+                <div class="metric-card bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-orange-600/20 text-orange-400">
+                            <i class="fas fa-tools text-2xl"></i>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <p class="text-sm font-medium text-gray-400">W serwisie</p>
+                            <p class="text-2xl font-bold text-white" id="vehicles-in-service">@(ViewBag.CarsInService ?? 0)</p>
+                            <p class="text-sm text-orange-400 flex items-center">
+                                <i class="fas fa-wrench mr-1"></i>Naprawy i przeglądy
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Employees -->
+                <div class="metric-card bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
                     <div class="flex items-center">
                         <div class="p-3 rounded-full bg-purple-600/20 text-purple-400">
-                            <i class="fas fa-chart-line text-2xl"></i>
+                            <i class="fas fa-users text-2xl"></i>
                         </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-gray-400">Wskaźnik wynajmu</p>
-                            <p class="text-2xl font-semibold text-white">87.2%</p>
-                            <p class="text-sm text-green-400">↑ 2.4%</p>
+                        <div class="ml-4 flex-1">
+                            <p class="text-sm font-medium text-gray-400">Pracownicy</p>
+                            <p class="text-2xl font-bold text-white" id="total-employees">@(ViewBag.TotalEmployees ?? 0)</p>
+                            <p class="text-sm text-purple-400 flex items-center">
+                                <i class="fas fa-user-tie mr-1"></i>Zespół firmy
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -99,117 +210,175 @@ Layout = "_Layout";
 
             <!-- Charts Section -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <!-- Line Chart -->
-                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-                    <h3 class="text-lg font-semibold text-white mb-4">Przychody w ostatnich 7 dniach</h3>
-                    <canvas id="lineChart" width="400" height="200"></canvas>
+                <!-- Vehicle Status Distribution -->
+                <div class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white">Status pojazdów</h3>
+                        <div class="flex space-x-2">
+                            <span class="text-xs px-2 py-1 bg-green-600/20 text-green-400 rounded-full">Dostępne</span>
+                            <span class="text-xs px-2 py-1 bg-orange-600/20 text-orange-400 rounded-full">Wynajęte</span>
+                            <span class="text-xs px-2 py-1 bg-red-600/20 text-red-400 rounded-full">Serwis</span>
+                        </div>
+                    </div>
+                    <div class="relative h-64">
+                        <canvas id="vehicleStatusChart"></canvas>
+                    </div>
                 </div>
 
-                <!-- Doughnut Chart -->
-                <div class="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-                    <h3 class="text-lg font-semibold text-white mb-4">Rodzaje pojazdów</h3>
-                    <canvas id="doughnutChart" width="400" height="200"></canvas>
+                <!-- Repair Costs Over Time -->
+                <div class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+                    <h3 class="text-lg font-semibold text-white mb-4">Koszty napraw (ostatnie 6 miesięcy)</h3>
+                    <div class="relative h-64">
+                        <canvas id="repairCostChart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- Recent Activity & Vehicle Status -->
+            <!-- Recent Activity & Fleet Overview -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Recent Activity -->
-                <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700">
+                <!-- Recent Repairs -->
+                <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700">
                     <div class="p-6 border-b border-gray-700">
-                        <h3 class="text-lg font-semibold text-white">Ostatnia aktywność</h3>
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-white">Ostatnie naprawy</h3>
+                            <a href="@Url.Action("RepairsList","Service")" class="text-sm text-blue-400 hover:text-blue-300">Zobacz wszystkie</a>
+                        </div>
                     </div>
                     <div class="p-6">
-                        <div class="space-y-4">
-                            <div class="flex items-center">
-                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-white">Nowa rezerwacja #1234</p>
-                                    <p class="text-xs text-gray-400">Mercedes-Benz C-Class - 2 minuty temu</p>
+                        <div class="space-y-4" id="recent-repairs">
+                            @if (ViewBag.RecentRepairs != null && ((List<RentService.Models.Repair>)ViewBag.RecentRepairs).Any())
+                            {
+                            @foreach (var repair in (List<RentService.Models.Repair>)ViewBag.RecentRepairs)
+                            {
+                            <div class="activity-item flex items-center p-3 rounded-lg">
+                                <div class="w-3 h-3 rounded-full flex-shrink-0 @(repair.Status == RentService.Models.RepairStatus.Completed ? "bg-green-500" : repair.Status == RentService.Models.RepairStatus.InProgress ? "bg-yellow-500" : "bg-red-500")"></div>
+                                <div class="ml-4 flex-1">
+                                    <p class="text-sm font-medium text-white">@repair.Vehicle.Model (@repair.Vehicle.RegistrationNumber)</p>
+                                    <p class="text-xs text-gray-400">@(repair.Description.Length > 50 ? repair.Description.Substring(0, 50) + "..." : repair.Description)</p>
+                                    <p class="text-xs text-gray-500">@repair.RepairDate.ToString("dd.MM.yyyy")</p>
+                                </div>
+                                <div class="text-right">
+                                            <span class="text-xs font-semibold @(repair.Status == RentService.Models.RepairStatus.Completed ? "text-green-400" : repair.Status == RentService.Models.RepairStatus.InProgress ? "text-yellow-400" : "text-red-400")">
+                                                @repair.Status.ToString()
+                                            </span>
+                                    <p class="text-xs text-gray-400">@repair.Cost.ToString("C", new System.Globalization.CultureInfo("pl-PL"))</p>
                                 </div>
                             </div>
-                            <div class="flex items-center">
-                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-white">Nowy użytkownik zarejestrowany</p>
-                                    <p class="text-xs text-gray-400">Anna Nowak - 15 minut temu</p>
-                                </div>
+                            }
+                            }
+                            else
+                            {
+                            <div class="text-center text-gray-400 py-8">
+                                <i class="fas fa-wrench text-3xl mb-2"></i>
+                                <p>Brak ostatnich napraw</p>
                             </div>
-                            <div class="flex items-center">
-                                <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-white">Płatność oczekująca</p>
-                                    <p class="text-xs text-gray-400">BMW X5 #5678 - 1 godzina temu</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-white">Pojazd wymaga serwisu</p>
-                                    <p class="text-xs text-gray-400">Audi A4 #9012 - 3 godziny temu</p>
-                                </div>
-                            </div>
+                            }
                         </div>
                     </div>
                 </div>
 
-                <!-- Popular Vehicles -->
-                <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700">
+                <!-- Vehicle Fleet Overview -->
+                <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700">
                     <div class="p-6 border-b border-gray-700">
-                        <h3 class="text-lg font-semibold text-white">Najpopularniejsze pojazdy</h3>
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-white">Przegląd floty</h3>
+                            <select class="text-xs bg-gray-700 text-white rounded px-2 py-1 border border-gray-600" id="vehicle-filter">
+                                <option value="all">Wszystkie</option>
+                                <option value="available">Dostępne</option>
+                                <option value="rented">Wynajęte</option>
+                                <option value="service">W serwisie</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="p-6">
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
+                        <div class="space-y-4 max-h-80 overflow-y-auto" id="vehicle-list">
+                            @if (ViewBag.VehicleList != null && ((List<RentService.Models.Vehicle>)ViewBag.VehicleList).Any())
+                            {
+                            @foreach (var vehicle in (List<RentService.Models.Vehicle>)ViewBag.VehicleList)
+                            {
+                            <div class="vehicle-item flex items-center justify-between p-3 rounded-lg border-l-4 border-transparent" data-status="@(vehicle.IsAvailable ? "available" : "rented")">
                                 <div class="flex items-center">
-                                    <img class="w-12 h-8 rounded object-cover" src="https://images.unsplash.com/photo-1549924231-f129b911e442?w=60&h=40&fit=crop" alt="Car">
+                                    <div class="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-car text-gray-400"></i>
+                                    </div>
                                     <div class="ml-4">
-                                        <p class="text-sm font-medium text-white">Mercedes-Benz C-Class</p>
-                                        <p class="text-xs text-gray-400">157 wynajmów</p>
+                                        <p class="text-sm font-semibold text-white">@vehicle.Model</p>
+                                        <p class="text-xs text-gray-400">@vehicle.RegistrationNumber • @vehicle.YearOfManufacture.Year</p>
+                                        <p class="text-xs text-gray-500">@vehicle.Mileage.ToString("N0") km • VIN: @(vehicle.VIN.Length >= 6 ? vehicle.VIN.Substring(vehicle.VIN.Length - 6) : vehicle.VIN)</p>
                                     </div>
                                 </div>
-                                <span class="text-sm font-semibold text-green-400">+23%</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <img class="w-12 h-8 rounded object-cover" src="https://images.unsplash.com/photo-1555215695-3004980ad54e?w=60&h=40&fit=crop" alt="Car">
-                                    <div class="ml-4">
-                                        <p class="text-sm font-medium text-white">BMW X5</p>
-                                        <p class="text-xs text-gray-400">142 wynajmów</p>
-                                    </div>
+                                <div class="text-right">
+                                            <span class="text-xs px-2 py-1 rounded-full @(vehicle.IsAvailable ? "status-available" : "status-rented")">
+                                                @(vehicle.IsAvailable ? "Dostępny" : "Wynajęty")
+                                            </span>
+                                    <p class="text-xs text-gray-400 mt-1">@vehicle.WeekRentalPrice.ToString("C", new System.Globalization.CultureInfo("pl-PL"))/tydz.</p>
                                 </div>
-                                <span class="text-sm font-semibold text-green-400">+18%</span>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <img class="w-12 h-8 rounded object-cover" src="https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=60&h=40&fit=crop" alt="Car">
-                                    <div class="ml-4">
-                                        <p class="text-sm font-medium text-white">Audi A4</p>
-                                        <p class="text-xs text-gray-400">98 wynajmów</p>
-                                    </div>
-                                </div>
-                                <span class="text-sm font-semibold text-red-400">-5%</span>
+                            }
+                            }
+                            else
+                            {
+                            <div class="text-center text-gray-400 py-8">
+                                <i class="fas fa-car text-3xl mb-2"></i>
+                                <p>Brak pojazdów w systemie</p>
+                                <a href="~/Vehicle/Create" class="text-blue-400 hover:text-blue-300 text-sm mt-2 inline-block">
+                                    Dodaj pierwszy pojazd
+                                </a>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <img class="w-12 h-8 rounded object-cover" src="https://images.unsplash.com/photo-1582639510494-c80b5de9f148?w=60&h=40&fit=crop" alt="Car">
-                                    <div class="ml-4">
-                                        <p class="text-sm font-medium text-white">Tesla Model 3</p>
-                                        <p class="text-xs text-gray-400">87 wynajmów</p>
-                                    </div>
-                                </div>
-                                <span class="text-sm font-semibold text-green-400">+12%</span>
-                            </div>
+                            }
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Maintenance Alerts -->
+            @if (ViewBag.MaintenanceAlerts != null && ((List<RentService.Models.VehicleModule.ExploitationPart>)ViewBag.MaintenanceAlerts).Any())
+            {
+            <div class="mt-6 bg-yellow-900/20 border border-yellow-700 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-yellow-400 text-xl mr-3"></i>
+                    <h3 class="text-lg font-semibold text-yellow-400">Powiadomienia o serwisie</h3>
+                </div>
+                <div class="space-y-3">
+                    @foreach (var alert in (List<RentService.Models.VehicleModule.ExploitationPart>)ViewBag.MaintenanceAlerts)
+                    {
+                    <div class="flex items-center justify-between bg-yellow-900/10 rounded-lg p-3">
+                        <div>
+                            <p class="text-sm font-medium text-white">@alert.Car.Model (@alert.Car.RegistrationNumber)</p>
+                            <p class="text-xs text-yellow-300">Część @alert.PartName wymaga wymiany</p>
+                            <p class="text-xs text-gray-400">Planowana data: @alert.NextReplacementDueDate.ToString("dd.MM.yyyy")</p>
+                        </div>
+                        <a href="~/ExploitationPart/Edit/@alert.ID" class="text-xs px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded-full transition-colors">
+                            Szczegóły
+                        </a>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
         </main>
     </div>
 </div>
 
 @section Scripts {
 <script>
+    // Set current date in Polish
+    const currentDate = new Date();
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+    };
+    document.getElementById('current-date').textContent = currentDate.toLocaleDateString('pl-PL', options);
+
+    // Update notification count
+    const maintenanceCount = @(ViewBag.MaintenanceAlerts != null ? ((List<RentService.Models.VehicleModule.ExploitationPart>)ViewBag.MaintenanceAlerts).Count : 0);
+    document.getElementById('notification-count').textContent = maintenanceCount;
+    if (maintenanceCount === 0) {
+        document.getElementById('notification-count').style.display = 'none';
+    }
+
     // Sidebar toggle functionality
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggle-sidebar');
@@ -217,119 +386,257 @@ Layout = "_Layout";
     const userInfo = document.getElementById('user-info');
     const navTexts = document.querySelectorAll('.nav-text');
 
-    toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('sidebar-collapsed');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            if (sidebar) {
+                sidebar.classList.toggle('sidebar-collapsed');
 
-        if (sidebar.classList.contains('sidebar-collapsed')) {
-            logoText.style.display = 'none';
-            userInfo.style.display = 'none';
-            navTexts.forEach(text => text.style.display = 'none');
-        } else {
-            logoText.style.display = 'block';
-            userInfo.style.display = 'block';
-            navTexts.forEach(text => text.style.display = 'block');
-        }
-    });
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    if (logoText) logoText.style.display = 'none';
+                    if (userInfo) userInfo.style.display = 'none';
+                    navTexts.forEach(text => text.style.display = 'none');
+                } else {
+                    if (logoText) logoText.style.display = 'block';
+                    if (userInfo) userInfo.style.display = 'block';
+                    navTexts.forEach(text => text.style.display = 'block');
+                }
+            }
+        });
+    }
 
-    // Chart.js default colors for dark theme
+    // Vehicle filter functionality
+    const vehicleFilter = document.getElementById('vehicle-filter');
+    if (vehicleFilter) {
+        vehicleFilter.addEventListener('change', function() {
+            const filterValue = this.value;
+            const vehicleItems = document.querySelectorAll('.vehicle-item');
+
+            vehicleItems.forEach(item => {
+                if (filterValue === 'all') {
+                    item.style.display = 'flex';
+                } else {
+                    const status = item.dataset.status;
+                    if (status === filterValue) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            });
+        });
+    }
+
+    // Chart.js configurations
     Chart.defaults.color = '#9CA3AF';
     Chart.defaults.borderColor = '#374151';
 
-    // Line Chart
-    const lineCtx = document.getElementById('lineChart').getContext('2d');
-    new Chart(lineCtx, {
-        type: 'line',
-        data: {
-            labels: ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'],
-            datasets: [{
-                label: 'Przychody (zł)',
-                data: [1200, 1900, 800, 1500, 2200, 1800, 2400],
-                borderColor: 'rgb(59, 130, 246)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
-                }
+    // Vehicle Status Chart
+    const vehicleStatusCtx = document.getElementById('vehicleStatusChart');
+    if (vehicleStatusCtx) {
+        const availableVehicles = @(ViewBag.AvailableCars ?? 0);
+        const totalVehicles = @(ViewBag.TotalCars ?? 0);
+        const vehiclesInService = @(ViewBag.CarsInService ?? 0);
+        const rentedVehicles = totalVehicles - availableVehicles - vehiclesInService;
+
+        new Chart(vehicleStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Dostępne', 'Wynajęte', 'W serwisie'],
+                datasets: [{
+                    data: [availableVehicles, rentedVehicles, vehiclesInService],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(16, 185, 129)',
+                        'rgb(245, 158, 11)',
+                        'rgb(239, 68, 68)'
+                    ],
+                    borderWidth: 3
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(75, 85, 99, 0.3)'
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#9CA3AF',
+                            padding: 15,
+                            usePointStyle: true,
+                            font: {
+                                size: 11
+                            }
+                        }
                     },
-                    ticks: {
-                        color: '#9CA3AF'
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
                     }
                 },
-                x: {
-                    grid: {
+                layout: {
+                    padding: {
+                        top: 10,
+                        bottom: 10
+                    }
+                }
+            }
+        });
+    }
+
+    // Repair Cost Chart
+    const repairCostCtx = document.getElementById('repairCostChart');
+    if (repairCostCtx) {
+        // Sample data - replace with real data from ViewBag.RepairCostData if available
+        const repairData = @Html.Raw(Json.Serialize(ViewBag.RepairCostData ?? new List<object>()));
+
+        let labels = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze'];
+        let costs = [2400, 1900, 3200, 2800, 2600, 3100];
+
+        if (repairData && repairData.length > 0) {
+            labels = repairData.map(item => item.Month || item.month);
+            costs = repairData.map(item => item.Cost || item.cost || 0);
+        }
+
+        new Chart(repairCostCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Koszty napraw (PLN)',
+                    data: costs,
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(239, 68, 68)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
+                plugins: {
+                    legend: {
                         display: false
                     },
-                    ticks: {
-                        color: '#9CA3AF'
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Koszt: ${context.parsed.y.toLocaleString('pl-PL', {
+                                    style: 'currency',
+                                    currency: 'PLN',
+                                    minimumFractionDigits: 0
+                                })}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(75, 85, 99, 0.3)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#9CA3AF',
+                            font: {
+                                size: 11
+                            },
+                            maxTicksLimit: 6,
+                            callback: function(value) {
+                                return value.toLocaleString('pl-PL', {
+                                    style: 'currency',
+                                    currency: 'PLN',
+                                    minimumFractionDigits: 0
+                                });
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#9CA3AF',
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 10,
+                        right: 10,
+                        bottom: 10,
+                        left: 10
                     }
                 }
             }
-        }
-    });
-
-    // Doughnut Chart
-    const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
-    new Chart(doughnutCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Sedan', 'SUV', 'Hatchback', 'Kombi', 'Elektryczne'],
-            datasets: [{
-                data: [35, 28, 15, 12, 10],
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(239, 68, 68, 0.8)',
-                    'rgba(168, 85, 247, 0.8)'
-                ],
-                borderColor: [
-                    'rgb(59, 130, 246)',
-                    'rgb(16, 185, 129)',
-                    'rgb(245, 158, 11)',
-                    'rgb(239, 68, 68)',
-                    'rgb(168, 85, 247)'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: '#9CA3AF',
-                        padding: 20,
-                        usePointStyle: true
-                    }
-                }
-            }
-        }
-    });
-
-    // Navigation active state
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.classList.remove('active', 'text-blue-400', 'bg-blue-900/30');
-                nav.classList.add('text-gray-300');
-            });
-            item.classList.add('active', 'text-blue-400', 'bg-blue-900/30');
-            item.classList.remove('text-gray-300');
         });
-    });
+    }
+
+    // Auto refresh functionality (optional)
+    function refreshDashboardData() {
+        fetch('/Home/GetVehicleStatistics')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    document.getElementById('total-vehicles').textContent = data.TotalVehicles;
+                    document.getElementById('available-vehicles').textContent = data.AvailableVehicles;
+                    document.getElementById('vehicles-in-service').textContent = data.VehiclesInService;
+                }
+            })
+            .catch(error => console.log('Error refreshing data:', error));
+    }
+
+    // Auto refresh every 5 minutes
+    setInterval(refreshDashboardData, 300000);
+
+    // Maintenance alert actions
+    function markMaintenanceComplete(partId) {
+        if (confirm('Czy na pewno chcesz oznaczyć ten serwis jako ukończony?')) {
+            fetch('/Home/MarkMaintenanceComplete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify({ partId: partId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Błąd: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd podczas zapisywania');
+                });
+        }
+    }
+
+    // Make function globally available
+    window.markMaintenanceComplete = markMaintenanceComplete;
 </script>
-}   
+}

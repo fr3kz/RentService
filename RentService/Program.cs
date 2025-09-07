@@ -50,6 +50,9 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AuthorizeFilter(policy));
 });
 
+builder.Services.AddCoreAdmin();
+
+
 var app = builder.Build();
 
 await SeedAdminUser(app);

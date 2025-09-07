@@ -45,17 +45,7 @@
             <i class="fas fa-users w-5"></i>
             <span class="nav-text ml-3">Serwis</span>
         </a>
-
-        <!-- Analityka -->
-        <a href="@Url.Action("Index", "Analytics")" 
-           class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors
-                  @(currentController.Equals("Analytics", StringComparison.OrdinalIgnoreCase) ? 
-                    "text-blue-400 bg-blue-900/30" : 
-                    "text-gray-300 hover:text-blue-400 hover:bg-gray-700")">
-            <i class="fas fa-chart-line w-5"></i>
-            <span class="nav-text ml-3">Analityka</span>
-        </a>
-
+        
         <!-- Płatności -->
         <a href="@Url.Action("Index", "Payments")" 
            class="nav-item flex items-center px-4 py-3 rounded-lg transition-colors
