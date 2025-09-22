@@ -171,7 +171,10 @@ public class ServiceController : Controller
                     repair.Status = RepairStatus.Scheduled;
                 }
 
-                Vehicle vehicle = await _context.Cars.FindAsync(repair.VehicleID);
+                Vehicle? vehicle = await _context.Cars
+                    .Include(v => v.MileageHistory)
+                    .FirstOrDefaultAsync(v => v.ID == repair.VehicleID);
+                
                 
                 if(vehicle == null)
                 {
@@ -180,17 +183,35 @@ public class ServiceController : Controller
                 }
                 repair.Vehicle = vehicle;
                 var parts =  _context.ExploitationParts.Where(r => r.VehicleID == vehicle.ID);
-                
-                foreach (var p in parts)
+
+
+                if (!repair.CzyNaprawaHistoryczna)
                 {
-                    p.CurrentKm = (int)(-vehicle.Mileage + repair.MileageAtRepair);
-                    //Todo: powiadomienie jezeli wartosc jest na minusie
-                    _context.ExploitationParts.Update(p);
+                    foreach (var p in parts)
+                    {
+                        var d = vehicle.Mileage;
+                        p.CurrentKm = (int)(-vehicle.Mileage + repair.MileageAtRepair);
+                        //Todo: powiadomienie jezeli wartosc jest na minusie
+                        _context.ExploitationParts.Update(p);
+                    }    
                 }
+               
                 
-                vehicle.Mileage = repair.MileageAtRepair;
+                var mileageEntry = new VehicleMileage
+                {
+                    CreatedAt = repair.RepairDate,
+                    Mileage = repair.MileageAtRepair,        
+                    Type = MileageAddEnum.Serwis,
+                    Car = vehicle  
+                };
+                _context.VehicleMileages.Add(mileageEntry);                
+
+              
                 
-                //Todo: dodanie historii przebiegu
+                
+               // vehicle.Mileage = repair.MileageAtRepair;
+                
+               
                 
                 _context.Repairs.Add(repair);
                 _context.Cars.Update(vehicle);

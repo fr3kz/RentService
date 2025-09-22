@@ -10,8 +10,8 @@ using RentService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
-      //  options.UseSqlite("Data Source=rentservice.db")
-      options.UseSqlite("Data Source=/var/www/RentService/RentService/rentservice.db")
+        options.UseSqlite("Data Source=rentservice.db")
+    //  options.UseSqlite("Data Source=/var/www/RentService/RentService/rentservice.db")
 
 );
 
@@ -131,6 +131,39 @@ sudo systemctl start rentservice
 sudo systemctl status rentservice
 
 sudo mv /var/www/RentService/RentService/rentservice.db /var/www/RentService/RentService/out/
+1️⃣ Wejdź do katalogu repozytorium
+cd /var/www/RentService/RentService
 
+
+Jeśli wcześniej git pokazywał błąd “dubious ownership”, dodaj katalog jako bezpieczny:
+
+sudo git config --global --add safe.directory /var/www/RentService
+
+2️⃣ Pobierz zmiany z repo
+git pull origin main
+
+
+Upewnij się, że w main jest aktualna wersja. Możesz zmienić main na swoją gałąź.
+
+3️⃣ Skompiluj nową DLL
+dotnet publish -c Release -o out
+
+
+-c Release – kompiluje w trybie produkcyjnym.
+
+-o out – zapisuje wynik w folderze out (tam, gdzie systemd oczekuje DLL).
+
+4️⃣ Zrestartuj usługę systemd
+sudo systemctl restart rentservice
+
+5️⃣ Sprawdź status
+sudo systemctl status rentservice
+
+
+Jeśli jest active (running) – aplikacja działa z nową wersją.
+
+Jeśli są błędy – sprawdź logi:
+
+journalctl -u rentservice -f  
 
 */

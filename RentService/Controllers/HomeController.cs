@@ -30,7 +30,7 @@ public class HomeController : Controller
             
             // Pojazdy w serwisie - te które mają aktywne naprawy
             var CarsInService = await _context.Repairs
-                .Where(r => r.Status == RepairStatus.InProgress || r.Status == RepairStatus.WaitingForParts)
+                .Where(r => r.Status != RepairStatus.Completed)
                 .Select(r => r.VehicleID)
                 .Distinct()
                 .CountAsync();

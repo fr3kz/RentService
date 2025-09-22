@@ -28,6 +28,7 @@ public class VehicleController : Controller
         try
         {
             var vehicles = await _context.Cars
+                .Include(v => v.MileageHistory)    
                 .OrderBy(v => v.Model)
                 .ToListAsync();
             
@@ -60,6 +61,7 @@ public class VehicleController : Controller
         {
             var vehicle = await _context.Cars
                 .Include(v => v.ExploitationParts)
+                .Include(x => x.MileageHistory)
                 .FirstOrDefaultAsync(v => v.ID == id);
 
             if (vehicle == null)
@@ -100,8 +102,24 @@ public class VehicleController : Controller
                 {
                     vehicle.ExploitationParts = new List<ExploitationPart>();
                 }
-
+                
+                
+            
                 _context.Cars.Add(vehicle);
+                
+                var mileageEntry = new VehicleMileage
+                {
+                    CreatedAt = DateTime.UtcNow,
+                    Mileage =  (int)vehicle.MileageForm,
+                    Type = MileageAddEnum.API,
+                    Car = vehicle
+                };
+
+                vehicle.MileageHistory = new List<VehicleMileage> { mileageEntry };
+
+                
+
+                _context.VehicleMileages.Add(mileageEntry);
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Vehicle created successfully with ID: {Id}", vehicle.ID);

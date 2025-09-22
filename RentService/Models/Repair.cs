@@ -29,10 +29,9 @@ namespace RentService.Models
         [StringLength(1000, MinimumLength = 5, ErrorMessage = "Opis naprawy musi mieć od 5 do 1000 znaków")]
         public string Description { get; set; }
 
-        [Required(ErrorMessage = "Koszt naprawy jest wymagany")]
         [Range(0.01, 999999.99, ErrorMessage = "Koszt naprawy musi być większy od 0")]
         [Column(TypeName = "decimal(10,2)")]
-        public decimal Cost { get; set; }
+        public decimal Cost { get; set; } = 1;
 
         [Required(ErrorMessage = "Typ naprawy jest wymagany")]
         [EnumDataType(typeof(RepairType), ErrorMessage = "Wybierz prawidłowy typ naprawy")]
@@ -60,6 +59,9 @@ namespace RentService.Models
 
         // Relacja many-to-many z częściami, które były naprawiane/wymieniane
         public ICollection<RepairExploitationPart> RepairParts { get; set; } = new List<RepairExploitationPart>();
+        
+        public bool CzyNaprawaHistoryczna { get; set; } = false;
+
     }
     
     public class RepairExploitationPart
@@ -77,7 +79,7 @@ namespace RentService.Models
 
         [StringLength(200, ErrorMessage = "Uwag" +
                                           "`i o części nie mogą przekraczać 200 znaków")]
-        public string PartNotes { get; set; }
+        public string? PartNotes { get; set; }
         
         public DateTime NextServiceCheck { get; set; }
         public int NextMillageCheck { get; set; }

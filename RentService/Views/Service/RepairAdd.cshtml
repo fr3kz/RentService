@@ -337,6 +337,18 @@ Layout = "_Layout";
                                 <span asp-validation-for="Cost" class="form-error"></span>
                                 <div class="form-help">Całkowity koszt naprawy w złotych</div>
                             </div>
+                            <div class="form-group">
+                                <div class="flex items-center">
+                                    <input asp-for="CzyNaprawaHistoryczna"
+                                           type="checkbox"
+                                           class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                                    <label asp-for="CzyNaprawaHistoryczna" class="ml-2 form-label">
+                                        Czy historyczna naprawa
+                                    </label>
+                                </div>
+                                <span asp-validation-for="CzyNaprawaHistoryczna" class="form-error"></span>
+                                <div class="form-help">Zaznacz, jeśli naprawa jest historyczna</div>
+                            </div>
                         </div>
                     </div>
 
@@ -386,8 +398,8 @@ Layout = "_Layout";
 
                         <div class="form-grid">
                             <div class="form-group">
-                                <label asp-for="StartDate" class="form-label">Data rozpoczęcia</label>
-                                <input asp-for="StartDate" type="date" class="form-input" id="startDateInput" />
+                                <label asp-for="RepairDate" class="form-label">Data rozpoczęcia</label>
+                                <input asp-for="RepairDate" type="date" class="form-input" id="startDateInput" />
                                 <span asp-validation-for="StartDate" class="form-error"></span>
                                 <div class="form-help">Kiedy rozpoczęto prace (opcjonalne)</div>
                             </div>

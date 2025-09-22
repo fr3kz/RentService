@@ -350,11 +350,11 @@
                         
                         <div class="form-grid">
                             <div class="form-group">
-                                @Html.LabelFor(m => m.Mileage, "Przebieg", new { @class = "form-label required" })
+                                @Html.LabelFor(m => m.MileageForm, "Przebieg", new { @class = "form-label required" })
                                 <div class="mileage-input-container">
-                                    @Html.TextBoxFor(m => m.Mileage, new { @class = "form-input", @type = "number", min = "0", step = "1", placeholder = "0" })
-                                </div>
-                                @Html.ValidationMessageFor(m => m.Mileage, "", new { @class = "form-error" })
+                                    @Html.TextBoxFor(m => m.MileageForm, new { @class = "form-input", @type = "number", min = "0", step = "1", placeholder = "0" })
+                                </div>ss
+                                @Html.ValidationMessageFor(m => m.MileageForm, "", new { @class = "form-error" })
                                 <div class="form-help">Aktualny przebieg pojazdu w kilometrach</div>
                             </div>
 

@@ -12,12 +12,15 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Vehicle> Cars { get; set; }
+    public DbSet<VehicleMileage> VehicleMileages { get; set; }
+
     public DbSet<Employee> Employees { get; set; }
     
     public DbSet<ExploitationPart> ExploitationParts { get; set; }
 
     public DbSet<Repair> Repairs { get; set; }
     public DbSet<RepairExploitationPart> RepairExploitationParts { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -26,6 +29,13 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
         modelBuilder.Entity<Vehicle>()
             .HasIndex(c => c.RegistrationNumber)
             .IsUnique();
+        
+        modelBuilder.Entity<VehicleMileage>()
+            .HasOne(vm => vm.Car)
+            .WithMany(v => v.MileageHistory)
+            .HasForeignKey(vm => vm.CarID)
+            .OnDelete(DeleteBehavior.Cascade);
+    
 
         // Konfiguracja User
         modelBuilder.Entity<User>()

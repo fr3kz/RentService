@@ -425,6 +425,14 @@
                 </div>
             </div>
 
+            <div class="detail-card">
+                <h2 class="detail-title">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Historia przebiegu
+                </h2>
+                <canvas id="mileageChart" height="100"></canvas>
+            </div>
+
             <!-- Vehicle Details -->
             <div class="detail-card">
                 <h2 class="detail-title">
@@ -560,8 +568,94 @@
     </div>
 </div>
 
-@section Scripts {
+
 <script>
+    const mileageLabels = [
+        @string.Join(",", Model.MileageHistory
+        .OrderBy(m => m.CreatedAt)
+        .Select(m => "\"" + m.CreatedAt.ToString("dd.MM.yyyy") + "\""))
+    ];
+
+    const mileageValues = [
+        @string.Join(",", Model.MileageHistory
+        .OrderBy(m => m.CreatedAt)
+        .Select(m => m.Mileage))
+    ];
+
+    const ctx = document.getElementById('mileageChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: mileageLabels,
+            datasets: [{
+                label: 'Przebieg [km]',
+                data: mileageValues,
+                borderColor: 'rgba(59, 130, 246, 1)',
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: 'rgba(59, 130, 246, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true, labels: { color: '#fff' } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#9ca3af' },
+                    grid: { color: '#374151' }
+                },
+                y: {
+                    ticks: { color: '#9ca3af' },
+                    grid: { color: '#374151' }
+                }
+            }
+        }
+    });
+</script>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const mileageLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    Model.MileageHistory.OrderBy(m => m.CreatedAt).Select(m => m.CreatedAt.ToString("dd.MM.yyyy"))
+    ));
+
+    const mileageValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    Model.MileageHistory.OrderBy(m => m.CreatedAt).Select(m => m.Mileage)
+    ));
+
+    console.log("Labels:", mileageLabels);
+    console.log("Values:", mileageValues);
+
+    const ctx = document.getElementById('mileageChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: mileageLabels,
+            datasets: [{
+                label: 'Przebieg [km]',
+                data: mileageValues,
+                borderColor: 'rgba(59, 130, 246, 1)',
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: 'rgba(59, 130, 246, 1)'
+            }]
+        }
+    });
+</script>
+
+<script>
+    
+    
+        
     // Sidebar toggle functionality
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggle-sidebar');
@@ -756,6 +850,8 @@
             }, index * 100);
         });
     });
+
+    
 </script>
 
 @Html.AntiForgeryToken()
