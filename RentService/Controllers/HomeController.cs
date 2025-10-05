@@ -23,13 +23,21 @@ public class HomeController : Controller
     {
         try
         {
-            // Pobierz podstawowe statystyki
             var totalCars = await _context.Cars.CountAsync();
-            var availableCars = await _context.Cars.CountAsync(v => v.IsAvailable);
+            
+            var carsInServiceIds = await _context.Repairs
+                .Where(r => r.Status != RepairStatus.Completed)
+                .Select(r => r.VehicleID)
+                .Distinct()
+                .ToListAsync();
+            
+            var availableCars = await _context.Cars
+                .Where(v => v.IsAvailable && !carsInServiceIds.Contains(v.ID))
+                .CountAsync();
             var totalEmployees = await _context.Employees.CountAsync();
             
             // Pojazdy w serwisie - te które mają aktywne naprawy
-            var CarsInService = await _context.Repairs
+            var carsInService = await _context.Repairs
                 .Where(r => r.Status != RepairStatus.Completed)
                 .Select(r => r.VehicleID)
                 .Distinct()
@@ -62,7 +70,7 @@ public class HomeController : Controller
             // Przekaż dane do widoku
             ViewBag.TotalCars = totalCars;
             ViewBag.AvailableCars = availableCars;
-            ViewBag.CarsInService = CarsInService;
+            ViewBag.CarsInService = carsInService;
             ViewBag.TotalEmployees = totalEmployees;
             ViewBag.RecentRepairs = recentRepairs;
             ViewBag.VehicleList = vehicleList;
@@ -86,11 +94,6 @@ public class HomeController : Controller
             
             return View();
         }
-    }
-
-    public IActionResult Privacy()
-    {
-        return View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -241,33 +244,6 @@ public class HomeController : Controller
         }
     }
 
-    [HttpPost]
-    public async Task<IActionResult> MarkMaintenanceComplete(int partId)
-    {
-        try
-        {
-            var part = await _context.ExploitationParts.FindAsync(partId);
-            if (part == null)
-            {
-                return Json(new { success = false, message = "Nie znaleziono części" });
-            }
-
-            part.LastReplacementDate = DateTime.Now;
-            part.NextReplacementDueDate = DateTime.Now.AddDays(part.TotalKm / 365); // Przykładowe wyliczenie
-            part.PartCondition = Condition.New;
-            part.CurrentKm = 0;
-
-            await _context.SaveChangesAsync();
-
-            return Json(new { success = true, message = "Serwis został oznaczony jako ukończony" });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Błąd podczas oznaczania serwisu jako ukończony dla części {partId}");
-            return Json(new { success = false, message = "Błąd serwera" });
-        }
-    }
-
     [HttpGet]
     public async Task<IActionResult> GetRecentActivity(int count = 10)
     {
@@ -287,7 +263,10 @@ public class HomeController : Controller
             {
                 Type = "repair",
                 Title = $"Naprawa: {r.Vehicle.Model} ({r.Vehicle.RegistrationNumber})",
-                Description = r.Description.Length > 50 ? r.Description.Substring(0, 50) + "..." : r.Description,
+                Description = r.Description.Length > 50
+                    ? string.Concat(r.Description.AsSpan(0, 50), "...")
+                    : r.Description,
+
                 Date = r.StartDate,
                 Status = GetRepairStatusText(r.Status),
                 Cost = r.Cost,
@@ -329,7 +308,7 @@ public class HomeController : Controller
         }
     }
 
-    private string GetRepairStatusText(RepairStatus status)
+    private static string GetRepairStatusText(RepairStatus status)
     {
         return status switch
         {
@@ -342,7 +321,7 @@ public class HomeController : Controller
         };
     }
 
-    private string GetRepairStatusColor(RepairStatus status)
+    private static string GetRepairStatusColor(RepairStatus status)
     {
         return status switch
         {
@@ -367,11 +346,12 @@ public class HomeController : Controller
                 .GroupBy(r => new { r.StartDate.Year, r.StartDate.Month })
                 .Select(g => new
                 {
-                    Year = g.Key.Year,
-                    Month = g.Key.Month,
-                    TotalCost = g.Sum(r => r.Cost)
+                    g.Key.Year,
+                    g.Key.Month,
+                    TotalCost = g.Sum(r => r.Cost) // tutaj zostawiamy, bo nazwa zmiennej różni się od wyrażenia
                 })
-                .OrderBy(g => g.Year).ThenBy(g => g.Month)
+                .OrderBy(g => g.Year)
+                .ThenBy(g => g.Month)
                 .ToListAsync();
 
             // Wypełnij brakujące miesiące zerami
@@ -401,12 +381,12 @@ public class HomeController : Controller
     {
         try
         {
-            var Cars = await _context.Cars.ToListAsync();
-            if (!Cars.Any())
+            var cars = await _context.Cars.ToListAsync();
+            if (cars.Count == 0)
                 return 0;
 
-            var totalAge = Cars.Sum(v => (DateTime.Now - v.YearOfManufacture).TotalDays / 365.25);
-            return Math.Round(totalAge / Cars.Count, 1);
+            var totalAge = cars.Sum(v => (DateTime.Now - v.YearOfManufacture).TotalDays / 365.25);
+            return Math.Round(totalAge / cars.Count, 1);
         }
         catch
         {

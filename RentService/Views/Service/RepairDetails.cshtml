@@ -667,7 +667,7 @@ Layout = "_Layout";
 </div>
 
 @section Scripts {
-<script>
+    <script>
     // Sidebar toggle functionality
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggle-sidebar');
@@ -751,10 +751,12 @@ Layout = "_Layout";
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                 }
             })
-                .then(response => response.json())
+                .then(response => {response.json();  location.reload();}
+                
+                )
                 .then(data => {
                     if (data.success) {
-                        window.location.href = '@Url.Action("RepairsList", "Service")';
+                        location.reload();
                     } else {
                         alert('Błąd: ' + data.message);
                     }
@@ -846,7 +848,7 @@ Layout = "_Layout";
     // Auto-refresh if repair is in progress (every 30 seconds)
     @if (Model.Status == RentService.Models.RepairStatus.InProgress)
     {
-    <text>
+        <text>
     setInterval(function() {
         // Check if page is visible
         if (!document.hidden) {
