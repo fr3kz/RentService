@@ -564,22 +564,85 @@
                 }
             </div>
 
-        </main>
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h2 class="detail-title">
+                        <i class="fas fa-wrench mr-2"></i>
+                        Historia napraw
+                    </h2>
+                    <a href="@Url.Action("RepairAdd", "Service")" class="btn btn-primary">
+                        <i class="fas fa-plus mr-2"></i>
+                        Dodaj naprawę
+                    </a>
+                </div>
+
+                @if (Model.Repairs != null && Model.Repairs.Any())
+                {
+                <div class="overflow-x-auto">
+                    <table class="parts-table">
+                        <thead>
+                        <tr>
+                            <th>Data naprawy</th>
+                            <th>Opis</th>
+                            <th>Koszt</th>
+                            <th>Przebieg przy naprawie</th>
+                            <th>Akcje</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var repair in Model.Repairs.OrderByDescending(r => r.StartDate))
+                        {
+                        <tr>
+                            <td>@repair.StartDate.ToString("dd.MM.yyyy")</td>
+                            <td>@repair.Description</td>
+                            <td>@repair.Cost.ToString("C2")</td>
+                            <td>@repair.MileageAtRepair.ToString("N0") km</td>
+                            <td>
+                                <div class="flex gap-1">
+                                    <a href="@Url.Action("RepairEdit", "Service", new { id = repair.ID })"
+                                       class="btn btn-secondary"
+                                       style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                               
+                                </div>
+                            </td>
+                        </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                }
+                else
+                {
+                <div class="empty-state">
+                    <i class="fas fa-wrench"></i>
+                    <h3 class="text-lg font-semibold mb-2">Brak zarejestrowanych napraw</h3>
+                    <p class="text-sm">Ten pojazd nie ma jeszcze historii napraw.</p>
+                    <a href="@Url.Action("RepairAdd", "Service")" class="btn btn-primary">
+                        <i class="fas fa-plus mr-2"></i>
+                        Dodaj naprawę
+                    </a>
+                </div>
+                }
+            </div>
+        </main>   
     </div>
 </div>
 
 
 <script>
+
     const mileageLabels = [
         @string.Join(",", Model.MileageHistory
-        .OrderBy(m => m.CreatedAt)
-        .Select(m => "\"" + m.CreatedAt.ToString("dd.MM.yyyy") + "\""))
+            .OrderBy(m => m.CreatedAt)
+            .Select(m => "\"" + m.CreatedAt.ToString("dd.MM.yyyy") + "\""))
     ];
 
     const mileageValues = [
         @string.Join(",", Model.MileageHistory
-        .OrderBy(m => m.CreatedAt)
-        .Select(m => m.Mileage))
+            .OrderBy(m => m.CreatedAt)
+            .Select(m => m.Mileage))
     ];
 
     const ctx = document.getElementById('mileageChart').getContext('2d');
@@ -615,6 +678,7 @@
             }
         }
     });
+
 </script>
 
 @section Scripts {

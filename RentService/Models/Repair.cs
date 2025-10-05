@@ -16,11 +16,6 @@ namespace RentService.Models
         [ValidateNever]
         public Vehicle Vehicle { get; set; }
 
-        [Required(ErrorMessage = "Data naprawy jest wymagana")]
-        [DataType(DataType.Date)]
-        [MaxDate(ErrorMessage = "Data naprawy nie może być z przyszłości")]
-        public DateTime RepairDate { get; set; }
-
         [Required(ErrorMessage = "Przebieg w momencie naprawy jest wymagany")]
         [Range(0, int.MaxValue, ErrorMessage = "Przebieg nie może być ujemny")]
         public int MileageAtRepair { get; set; }
@@ -44,9 +39,8 @@ namespace RentService.Models
         [StringLength(500, ErrorMessage = "Dodatkowe uwagi nie mogą przekraczać 500 znaków")]
         public string? AdditionalNotes { get; set; }
 
-        // Data rozpoczęcia naprawy (opcjonalna - może być różna od RepairDate)
         [DataType(DataType.Date)]
-        public DateTime? StartDate { get; set; }
+        public DateTime StartDate { get; set; }
 
         // Data zakończenia naprawy (opcjonalna)
         [DataType(DataType.Date)]

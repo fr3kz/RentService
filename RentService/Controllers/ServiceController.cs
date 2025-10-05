@@ -31,7 +31,7 @@ public class ServiceController : Controller
                 .Include(r => r.Vehicle)
                 .Include(r => r.RepairParts)
                     .ThenInclude(rp => rp.ExploitationPart)
-                .OrderByDescending(r => r.RepairDate)
+                .OrderByDescending(r => r.StartDate)
                 .ToListAsync();
 
             _logger.LogInformation($"Pobrano {repairs.Count} napraw z bazy danych");
@@ -108,7 +108,7 @@ public class ServiceController : Controller
 
             var repair = new Repair
             {
-                RepairDate = DateTime.Now.Date,
+                StartDate = DateTime.Now.Date,
                 Status = RepairStatus.Scheduled
             };
 
@@ -142,12 +142,7 @@ public class ServiceController : Controller
         {
             try
             {
-                if (repair.StartDate.HasValue && repair.StartDate < repair.RepairDate)
-                {
-                    ModelState.AddModelError("StartDate", "Data rozpoczęcia nie może być wcześniejsza niż data naprawy.");
-                }
-
-                if (repair.CompletionDate.HasValue && repair.StartDate.HasValue && repair.CompletionDate < repair.StartDate)
+                if (repair.CompletionDate.HasValue  && repair.CompletionDate < repair.StartDate)
                 {
                     ModelState.AddModelError("CompletionDate", "Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.");
                 }
@@ -199,7 +194,7 @@ public class ServiceController : Controller
                 
                 var mileageEntry = new VehicleMileage
                 {
-                    CreatedAt = repair.RepairDate,
+                    CreatedAt = repair.StartDate,
                     Mileage = repair.MileageAtRepair,        
                     Type = MileageAddEnum.Serwis,
                     Car = vehicle  
@@ -282,7 +277,7 @@ public class ServiceController : Controller
 
                 // Aktualizuj właściwości
                 existingRepair.VehicleID = repair.VehicleID;
-                existingRepair.RepairDate = repair.RepairDate;
+                existingRepair.StartDate = repair.StartDate;
                 existingRepair.MileageAtRepair = repair.MileageAtRepair;
                 existingRepair.Description = repair.Description;
                 existingRepair.Cost = repair.Cost;
@@ -545,7 +540,7 @@ public class ServiceController : Controller
         try
         {
             var vehicle = await _context.Cars
-                .Include(v => v.Repairs.OrderByDescending(r => r.RepairDate))
+                .Include(v => v.Repairs.OrderByDescending(r => r.StartDate))
                     .ThenInclude(r => r.RepairParts)
                         .ThenInclude(rp => rp.ExploitationPart)
                 .FirstOrDefaultAsync(v => v.ID == vehicleId);
@@ -608,7 +603,7 @@ public class ServiceController : Controller
                     }
                     if (repair.StartDate == null)
                     {
-                        repair.StartDate = repair.RepairDate;
+                        repair.StartDate = repair.StartDate;
                     }
                     //Todo: na czesci musi zaktualizować sie
                     break;
@@ -660,19 +655,28 @@ public class ServiceController : Controller
         }
 
         var repiar_parts = _context.RepairExploitationParts.Where(r => r.RepairID == id);
-        using (var transaction = await _context.Database.BeginTransactionAsync())
+        
+        if (!repair.CzyNaprawaHistoryczna)
         {
-            foreach (var p in repiar_parts)
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
+                foreach (var p in repiar_parts)
+                {
                     var epart = await _context.ExploitationParts.FindAsync(p.ExploitationPartID);
                     epart.NextReplacementDueDate = p.NextServiceCheck;
                     epart.TotalKm = p.NextMillageCheck;
                 
 
             
+                }
+                await transaction.CommitAsync();
             }
-            await transaction.CommitAsync();
         }
+        
+        
+        
+        
+     
         
         
         return await ChangeRepairStatus(id, RepairStatus.Completed);
@@ -787,12 +791,12 @@ public class ServiceController : Controller
                     .ToListAsync(),
                 RecentRepairs = await _context.Repairs
                     .Include(r => r.Vehicle)
-                    .OrderByDescending(r => r.RepairDate)
+                    .OrderByDescending(r => r.StartDate)
                     .Take(5)
                     .Select(r => new 
                     { 
                         r.ID, 
-                        r.RepairDate, 
+                        r.StartDate, 
                         VehicleModel = r.Vehicle.Model,
                         r.Cost,
                         r.Status 
@@ -840,12 +844,12 @@ public class ServiceController : Controller
             }
 
             var repairs = await repairsQuery
-                .OrderByDescending(r => r.RepairDate)
+                .OrderByDescending(r => r.StartDate)
                 .Take(50) // Limit wyników
                 .Select(r => new
                 {
                     r.ID,
-                    r.RepairDate,
+                    r.StartDate,
                     VehicleModel = r.Vehicle.Model,
                     VehicleRegistration = r.Vehicle.RegistrationNumber,
                     r.RepairType,
@@ -878,16 +882,16 @@ public class ServiceController : Controller
 
             if (startDate.HasValue)
             {
-                repairsQuery = repairsQuery.Where(r => r.RepairDate >= startDate.Value);
+                repairsQuery = repairsQuery.Where(r => r.StartDate >= startDate.Value);
             }
 
             if (endDate.HasValue)
             {
-                repairsQuery = repairsQuery.Where(r => r.RepairDate <= endDate.Value);
+                repairsQuery = repairsQuery.Where(r => r.StartDate <= endDate.Value);
             }
 
             var repairs = await repairsQuery
-                .OrderByDescending(r => r.RepairDate)
+                .OrderByDescending(r => r.StartDate)
                 .ToListAsync();
 
             var csv = GenerateCSVContent(repairs);
@@ -917,7 +921,6 @@ public class ServiceController : Controller
         foreach (var repair in repairs)
         {
             csvContent.AppendLine($"{repair.ID}," +
-                $"\"{repair.RepairDate:yyyy-MM-dd}\"," +
                 $"\"{repair.Vehicle.Model}\"," +
                 $"\"{repair.Vehicle.RegistrationNumber}\"," +
                 $"\"{GetRepairTypeDisplayName(repair.RepairType)}\"," +
@@ -925,7 +928,7 @@ public class ServiceController : Controller
                 $"{repair.Cost}," +
                 $"{repair.MileageAtRepair}," +
                 $"\"{repair.Description?.Replace("\"", "\"\"")}\"," +
-                $"\"{repair.StartDate?.ToString("yyyy-MM-dd")}\"," +
+                $"\"{repair.StartDate.ToString("yyyy-MM-dd")}\"," +
                 $"\"{repair.CompletionDate?.ToString("yyyy-MM-dd")}\"," +
                 $"\"{repair.InvoiceNumber}\"," +
                 $"{repair.RepairParts.Count}");
@@ -1047,19 +1050,13 @@ public class ServiceController : Controller
     {
         errorMessage = string.Empty;
 
-        if (repair.StartDate.HasValue && repair.StartDate < repair.RepairDate)
-        {
-            errorMessage = "Data rozpoczęcia nie może być wcześniejsza niż data naprawy.";
-            return false;
-        }
-
-        if (repair.CompletionDate.HasValue && repair.StartDate.HasValue && repair.CompletionDate < repair.StartDate)
+        if (repair.CompletionDate.HasValue && repair.CompletionDate < repair.StartDate)
         {
             errorMessage = "Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.";
             return false;
         }
 
-        if (repair.RepairDate > DateTime.Now.Date)
+        if (repair.StartDate > DateTime.Now.Date)
         {
             errorMessage = "Data naprawy nie może być z przyszłości.";
             return false;
@@ -1068,15 +1065,7 @@ public class ServiceController : Controller
         return true;
     }
 
-    // Sprawdzenie uprawnień do naprawy (do rozszerzenia w przyszłości)
-    private async Task<bool> CanUserAccessRepair(int repairId, string userId = null)
-    {
-        // TODO: Implementacja sprawdzania uprawnień użytkownika
-        // Na razie zwracamy true dla wszystkich
-        return await Task.FromResult(true);
-    }
 
-    // STARE METODY - zachowane dla kompatybilności wstecznej
     [HttpGet]
     [Obsolete("Użyj RepairsList zamiast ServiceList")]
     public async Task<IActionResult> ServiceList()
@@ -1093,7 +1082,6 @@ public class ServiceController : Controller
         return RedirectToAction(nameof(RepairAdd), new { vehicleId });
     }
 
-    // Metody pomocnicze do obsługi różnych nazw tabel
     private async Task<Vehicle> GetVehicleByIdAsync(int vehicleId)
     {
         try

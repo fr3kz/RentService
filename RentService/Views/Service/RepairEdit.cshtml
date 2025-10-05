@@ -83,7 +83,7 @@ Layout = "_Layout";
                         </span>
                         <span class="flex items-center">
                             <i class="fas fa-calendar mr-2"></i>
-                            Naprawa z @Model.RepairDate.ToString("dd.MM.yyyy")
+                            Naprawa z @Model.StartDate.ToString("dd.MM.yyyy")
                         </span>
                         <span class="flex items-center">
                             <i class="fas fa-hashtag mr-2"></i>
@@ -175,13 +175,13 @@ Layout = "_Layout";
                             </div>
 
                             <div class="space-y-2">
-                                <label asp-for="RepairDate" class="block text-sm font-medium text-gray-300">
+                                <label asp-for="StartDate" class="block text-sm font-medium text-gray-300">
                                     Data naprawy <span class="text-red-400">*</span>
                                 </label>
-                                <input asp-for="RepairDate" type="date" 
+                                <input asp-for="StartDate" type="date" 
                                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                                        id="repairDateInput" />
-                                <span asp-validation-for="RepairDate" class="text-red-400 text-sm"></span>
+                                <span asp-validation-for="StartDate" class="text-red-400 text-sm"></span>
                                 <p class="text-gray-500 text-sm">Data wykonania naprawy</p>
                             </div>
 
@@ -268,13 +268,13 @@ Layout = "_Layout";
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
-                                <label asp-for="RepairDate" class="block text-sm font-medium text-gray-300">
+                                <label asp-for="StartDate" class="block text-sm font-medium text-gray-300">
                                     Data rozpoczęcia
                                 </label>
-                                <input asp-for="RepairDate" type="date" 
+                                <input asp-for="StartDate" type="date" 
                                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                                        id="startDateInput" />
-                                <span asp-validation-for="RepairDate" class="text-red-400 text-sm"></span>
+                                <span asp-validation-for="StartDate" class="text-red-400 text-sm"></span>
                                 <p class="text-gray-500 text-sm">Kiedy rozpoczęto prace (opcjonalne)</p>
                             </div>
 

@@ -321,19 +321,17 @@ Layout = "_Layout";
                                     <i class="fas fa-calendar-alt mr-2 text-purple-400"></i>
                                     Data naprawy
                                 </span>
-                                <span class="info-value">@Model.RepairDate.ToString("dd MMMM yyyy")</span>
+                                <span class="info-value">@Model.StartDate.ToString("dd MMMM yyyy")</span>
                             </div>
 
-                            @if (Model.StartDate.HasValue)
-                            {
                             <div class="info-item">
                                     <span class="info-label">
                                         <i class="fas fa-play mr-2 text-green-400"></i>
                                         Data rozpoczęcia
                                     </span>
-                                <span class="info-value text-green-400">@Model.StartDate.Value.ToString("dd MMMM yyyy")</span>
+                                <span class="info-value text-green-400">@Model.StartDate.ToString("dd MMMM yyyy")</span>
                             </div>
-                            }
+                            
 
                             @if (Model.CompletionDate.HasValue)
                             {
@@ -345,28 +343,15 @@ Layout = "_Layout";
                                 <span class="info-value text-green-400">@Model.CompletionDate.Value.ToString("dd MMMM yyyy")</span>
                             </div>
 
-                            @if (Model.StartDate.HasValue)
-                            {
                             <div class="info-item">
                                         <span class="info-label">
                                             <i class="fas fa-clock mr-2 text-orange-400"></i>
                                             Czas trwania
                                         </span>
-                                <span class="info-value text-orange-400">@((Model.CompletionDate.Value - Model.StartDate.Value).Days) dni</span>
+                                <span class="info-value text-orange-400">@((Model.CompletionDate.Value - Model.StartDate).Days) dni</span>
                             </div>
                             }
-                            }
-                            else if (Model.StartDate.HasValue)
-                            {
-                            <div class="info-item">
-                                    <span class="info-label">
-                                        <i class="fas fa-hourglass-half mr-2 text-yellow-400"></i>
-                                        Czas od rozpoczęcia
-                                    </span>
-                                <span class="info-value text-yellow-400">@((DateTime.Now - Model.StartDate.Value).Days) dni</span>
-                            </div>
-                            }
-
+                            
                             <div class="info-item">
                                 <span class="info-label">
                                     <i class="fas fa-tachometer-alt mr-2 text-cyan-400"></i>
@@ -552,7 +537,7 @@ Layout = "_Layout";
                                 <div class="bg-gray-800 rounded-lg p-4">
                                     <div class="flex justify-between items-start mb-2">
                                         <h4 class="font-medium text-white">Zgłoszenie naprawy</h4>
-                                        <span class="text-xs text-gray-400">@Model.RepairDate.ToString("dd.MM.yyyy")</span>
+                                        <span class="text-xs text-gray-400">@Model.StartDate.ToString("dd.MM.yyyy")</span>
                                     </div>
                                     <p class="text-sm text-gray-300">
                                         Naprawa typu "@Model.RepairType" została zgłoszona dla pojazdu @Model.Vehicle.Model przy przebiegu @Model.MileageAtRepair.ToString("N0") km.
@@ -560,20 +545,18 @@ Layout = "_Layout";
                                 </div>
                             </div>
 
-                            @if (Model.StartDate.HasValue)
-                            {
                             <div class="timeline-item">
                                 <div class="bg-gray-800 rounded-lg p-4">
                                     <div class="flex justify-between items-start mb-2">
                                         <h4 class="font-medium text-white">Rozpoczęcie prac</h4>
-                                        <span class="text-xs text-gray-400">@Model.StartDate.Value.ToString("dd.MM.yyyy")</span>
+                                        <span class="text-xs text-gray-400">@Model.StartDate.ToString("dd.MM.yyyy")</span>
                                     </div>
                                     <p class="text-sm text-gray-300">
                                         Rozpoczęto prace naprawcze.
                                     </p>
                                 </div>
                             </div>
-                            }
+                            
 
                             @if (Model.RepairParts.Any())
                             {
@@ -581,7 +564,7 @@ Layout = "_Layout";
                                 <div class="bg-gray-800 rounded-lg p-4">
                                     <div class="flex justify-between items-start mb-2">
                                         <h4 class="font-medium text-white">Obsługa części eksploatacyjnych</h4>
-                                        <span class="text-xs text-gray-400">@((Model.StartDate ?? Model.RepairDate).AddDays(1).ToString("dd.MM.yyyy"))</span>
+                                        <span class="text-xs text-gray-400">@((Model.StartDate).AddDays(1).ToString("dd.MM.yyyy"))</span>
                                     </div>
                                     <p class="text-sm text-gray-300">
                                         Obsłużono @Model.RepairParts.Count części eksploatacyjnych:
@@ -601,10 +584,9 @@ Layout = "_Layout";
                                     </div>
                                     <p class="text-sm text-gray-300">
                                         Naprawa została pomyślnie zakończona.
-                                        @if (Model.StartDate.HasValue)
-                                        {
-                                        <text>Całkowity czas: @((Model.CompletionDate.Value - Model.StartDate.Value).Days) dni.</text>
-                                        }
+                                     
+                                        <text>Całkowity czas: @((Model.CompletionDate.Value - Model.StartDate).Days) dni.</text>
+                                        
                                     </p>
                                 </div>
                             </div>
@@ -619,10 +601,9 @@ Layout = "_Layout";
                                     </div>
                                     <p class="text-sm text-yellow-300">
                                         Naprawa jest w statusie: @statusText.
-                                        @if (Model.StartDate.HasValue)
-                                        {
-                                        <text>Czas od rozpoczęcia: @((DateTime.Now - Model.StartDate.Value).Days) dni.</text>
-                                        }
+                                     
+                                        <text>Czas od rozpoczęcia: @((DateTime.Now - Model.StartDate).Days) dni.</text>
+                                        
                                     </p>
                                 </div>
                             </div>
@@ -730,7 +711,7 @@ Layout = "_Layout";
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Wystąpił błąd podczas oznaczania naprawy jako zakończonej.');
+                   // alert('Wystąpił błąd podczas oznaczania naprawy jako zakończonej.');
                 });
         }
     };
@@ -754,7 +735,7 @@ Layout = "_Layout";
                     }
                 })
                 .catch(error => {
-                    alert('Wystąpił błąd podczas ponownego otwierania naprawy.' + error.toString());
+                  //  alert('Wystąpił błąd podczas ponownego otwierania naprawy.' + error.toString());
                 });
         }
     };
@@ -763,7 +744,7 @@ Layout = "_Layout";
     // Delete repair
     window.deleteRepair = function(repairId) {
         if (confirm('Czy na pewno chcesz usunąć tę naprawę? Ta operacja jest nieodwracalna!')) {
-            fetch(`@Url.Action("RepairDelete", "Repair")/${repairId}`, {
+            fetch(`@Url.Action("RepairDelete", "Service")/${repairId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -773,14 +754,14 @@ Layout = "_Layout";
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = '@Url.Action("RepairList", "Repair")';
+                        window.location.href = '@Url.Action("RepairsList", "Service")';
                     } else {
                         alert('Błąd: ' + data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Wystąpił błąd podczas usuwania naprawy.');
+                    //alert('Wystąpił błąd podczas usuwania naprawy.');
                 });
         }
     };

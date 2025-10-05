@@ -255,7 +255,7 @@ Layout = "_Layout";
                                 <div class="ml-4 flex-1">
                                     <p class="text-sm font-medium text-white">@repair.Vehicle.Model (@repair.Vehicle.RegistrationNumber)</p>
                                     <p class="text-xs text-gray-400">@(repair.Description.Length > 50 ? repair.Description.Substring(0, 50) + "..." : repair.Description)</p>
-                                    <p class="text-xs text-gray-500">@repair.RepairDate.ToString("dd.MM.yyyy")</p>
+                                    <p class="text-xs text-gray-500">@repair.StartDate.ToString("dd.MM.yyyy")</p>
                                 </div>
                                 <div class="text-right">
                                             <span class="text-xs font-semibold @(repair.Status == RentService.Models.RepairStatus.Completed ? "text-green-400" : repair.Status == RentService.Models.RepairStatus.InProgress ? "text-yellow-400" : "text-red-400")">
@@ -291,7 +291,7 @@ Layout = "_Layout";
                         </div>
                     </div>
                     <div class="p-6">
-                        <div class="space-y-4 max-h-80 overflow-y-auto" id="vehicle-list">
+                        <div class="space-y-4" id="vehicle-list">
                             @if (ViewBag.VehicleList != null && ((List<RentService.Models.Vehicle>)ViewBag.VehicleList).Any())
                             {
                             @foreach (var vehicle in (List<RentService.Models.Vehicle>)ViewBag.VehicleList)

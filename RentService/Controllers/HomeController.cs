@@ -38,7 +38,7 @@ public class HomeController : Controller
             // Ostatnie naprawy (5 najnowszych)
             var recentRepairs = await _context.Repairs
                 .Include(r => r.Vehicle)
-                .OrderByDescending(r => r.RepairDate)
+                .OrderByDescending(r => r.StartDate)
                 .Take(5)
                 .ToListAsync();
 
@@ -137,22 +137,22 @@ public class HomeController : Controller
             var lastMonth = currentMonth.AddMonths(-1);
 
             var currentMonthRepairs = await _context.Repairs
-                .Where(r => r.RepairDate.Month == currentMonth.Month && r.RepairDate.Year == currentMonth.Year)
+                .Where(r => r.StartDate.Month == currentMonth.Month && r.StartDate.Year == currentMonth.Year)
                 .CountAsync();
 
             var lastMonthRepairs = await _context.Repairs
-                .Where(r => r.RepairDate.Month == lastMonth.Month && r.RepairDate.Year == lastMonth.Year)
+                .Where(r => r.StartDate.Month == lastMonth.Month && r.StartDate.Year == lastMonth.Year)
                 .CountAsync();
 
             var currentMonthCost = await _context.Repairs
-                .Where(r => r.RepairDate.Month == currentMonth.Month && 
-                           r.RepairDate.Year == currentMonth.Year &&
+                .Where(r => r.StartDate.Month == currentMonth.Month && 
+                           r.StartDate.Year == currentMonth.Year &&
                            r.Status == RepairStatus.Completed)
                 .SumAsync(r => r.Cost);
 
             var lastMonthCost = await _context.Repairs
-                .Where(r => r.RepairDate.Month == lastMonth.Month && 
-                           r.RepairDate.Year == lastMonth.Year &&
+                .Where(r => r.StartDate.Month == lastMonth.Month && 
+                           r.StartDate.Year == lastMonth.Year &&
                            r.Status == RepairStatus.Completed)
                 .SumAsync(r => r.Cost);
 
@@ -278,7 +278,7 @@ public class HomeController : Controller
             // Pobierz naprawy
             var recentRepairs = await _context.Repairs
                 .Include(r => r.Vehicle)
-                .OrderByDescending(r => r.RepairDate)
+                .OrderByDescending(r => r.StartDate)
                 .Take(count)
                 .ToListAsync();
 
@@ -288,7 +288,7 @@ public class HomeController : Controller
                 Type = "repair",
                 Title = $"Naprawa: {r.Vehicle.Model} ({r.Vehicle.RegistrationNumber})",
                 Description = r.Description.Length > 50 ? r.Description.Substring(0, 50) + "..." : r.Description,
-                Date = r.RepairDate,
+                Date = r.StartDate,
                 Status = GetRepairStatusText(r.Status),
                 Cost = r.Cost,
                 Icon = "fas fa-wrench",
@@ -363,8 +363,8 @@ public class HomeController : Controller
             var sixMonthsAgo = DateTime.Now.AddMonths(-6);
             
             var monthlyCosts = await _context.Repairs
-                .Where(r => r.RepairDate >= sixMonthsAgo && r.Status == RepairStatus.Completed)
-                .GroupBy(r => new { r.RepairDate.Year, r.RepairDate.Month })
+                .Where(r => r.StartDate >= sixMonthsAgo && r.Status == RepairStatus.Completed)
+                .GroupBy(r => new { r.StartDate.Year, r.StartDate.Month })
                 .Select(g => new
                 {
                     Year = g.Key.Year,

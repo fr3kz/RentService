@@ -62,6 +62,7 @@ public class VehicleController : Controller
             var vehicle = await _context.Cars
                 .Include(v => v.ExploitationParts)
                 .Include(x => x.MileageHistory)
+                .Include(b => b.Repairs)
                 .FirstOrDefaultAsync(v => v.ID == id);
 
             if (vehicle == null)

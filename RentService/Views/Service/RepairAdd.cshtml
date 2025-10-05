@@ -312,13 +312,7 @@ Layout = "_Layout";
                                 <span asp-validation-for="VehicleID" class="form-error"></span>
                                 <div class="form-help">Wybierz pojazd z listy dostępnych</div>
                             </div>
-
-                            <div class="form-group">
-                                <label asp-for="RepairDate" class="form-label required">Data naprawy</label>
-                                <input asp-for="RepairDate" type="date" class="form-input" id="repairDateInput" />
-                                <span asp-validation-for="RepairDate" class="form-error"></span>
-                                <div class="form-help">Data wykonania naprawy</div>
-                            </div>
+                            
 
                             <div class="form-group">
                                 <label asp-for="MileageAtRepair" class="form-label required">Przebieg w momencie naprawy</label>
@@ -398,10 +392,10 @@ Layout = "_Layout";
 
                         <div class="form-grid">
                             <div class="form-group">
-                                <label asp-for="RepairDate" class="form-label">Data rozpoczęcia</label>
-                                <input asp-for="RepairDate" type="date" class="form-input" id="startDateInput" />
+                                <label asp-for="StartDate" class="form-label">Data rozpoczęcia</label>
+                                <input asp-for="StartDate" type="date" class="form-input" id="startDateInput" />
                                 <span asp-validation-for="StartDate" class="form-error"></span>
-                                <div class="form-help">Kiedy rozpoczęto prace (opcjonalne)</div>
+                                <div class="form-help">Kiedy rozpoczęto prace</div>
                             </div>
 
                             <div class="form-group">
